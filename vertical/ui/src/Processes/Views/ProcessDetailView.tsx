@@ -12,7 +12,6 @@ import { toaster } from '@/Snippets/toaster'
 import ProcessResults from '../Components/ProcessResults'
 import GeneralInfoTab from '../Components/ProcessForm/GeneralInfoTab'
 import CostsTab from '../Components/ProcessForm/CostsTab'
-import ProductivityTab from '../Components/ProcessForm/ProductivityTab'
 import ImpactTab from '../Components/ProcessForm/ImpactTab'
 import { processFormSchema, type ProcessFormValues } from '../Forms/ProcessFormSchema'
 import { useDeleteDocumentMutation, useDeleteProcessMutation, useProcessQuery, useUpdateProcessMutation, useUpdateProcessStatusMutation, useUploadDocumentMutation } from '../Services/Api'
@@ -26,7 +25,6 @@ const allStatuses: ProcessStatus[] = ['To Valuate', 'Analysis', 'Ongoing', 'Prod
 const editTabs = [
   { key: 'general', label: 'Informazioni Generali' },
   { key: 'costs', label: 'Costi e Operativita' },
-  { key: 'productivity', label: 'Errori e Produttivita' },
   { key: 'impact', label: 'Valutazione Impatto' },
 ] as const
 
@@ -305,7 +303,6 @@ export default function ProcessDetailView() {
           <Box bg="white" borderRadius="16px" boxShadow="0 2px 20px rgba(0,0,0,0.06)" p={7}>
             {editTab === 'general' && <GeneralInfoTab form={form} />}
             {editTab === 'costs' && <CostsTab form={form} />}
-            {editTab === 'productivity' && <ProductivityTab form={form} />}
             {editTab === 'impact' && <ImpactTab form={form} />}
           </Box>
         </>

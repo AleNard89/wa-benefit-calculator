@@ -224,6 +224,30 @@ export default function CostsTab({ form }: Props) {
           )}
         </Flex>
       </Box>
+
+      <Box h="1px" bg="#f0f0f2" />
+
+      <Box>
+        <Text fontSize="15px" fontWeight="700" color="#1d1d1f" mb={4}>Errori e Produttivita</Text>
+        <Flex direction="column" gap={4}>
+          <Flex gap={4}>
+            <Field label="Tasso Errore Attuale (%)" error={errors.currentErrorRate?.message}>
+              <Input type="number" step="0.1" {...register('currentErrorRate', { valueAsNumber: true })} min={0} max={100} {...inputStyle} />
+            </Field>
+            <Field label="Costo per Errore (EUR)" error={errors.errorCost?.message}>
+              <Input type="number" step="0.01" {...register('errorCost', { valueAsNumber: true })} min={0} {...inputStyle} />
+            </Field>
+          </Flex>
+          <Flex gap={4}>
+            <Field label="Fattore Riduzione Tempo (%)">
+              <Input type="number" {...register('timeReductionFactor', { valueAsNumber: true })} min={0} max={100} {...inputStyle} />
+            </Field>
+            <Field label="Fattore Aumento Produttivita (x)">
+              <Input type="number" step="0.1" {...register('productivityFactor', { valueAsNumber: true })} min={1} {...inputStyle} />
+            </Field>
+          </Flex>
+        </Flex>
+      </Box>
     </Flex>
   )
 }

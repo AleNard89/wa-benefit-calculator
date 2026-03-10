@@ -20,7 +20,7 @@ func CalculateBenefits(p *Process) error {
 	annualCostAfter := annualCostBefore * (1.0 - reductionFactor)
 	operationalSavings := annualCostBefore - annualCostAfter
 
-	errorRateDiff := (d.CurrentErrorRate - d.PostErrorRate) / 100.0
+	errorRateDiff := d.CurrentErrorRate / 100.0
 	errorReductionSavings := activitiesPerDay * workingDays * errorRateDiff * d.ErrorCost
 
 	activitiesAfter := activitiesPerDay * d.ProductivityFactor

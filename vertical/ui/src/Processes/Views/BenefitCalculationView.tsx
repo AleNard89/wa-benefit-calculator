@@ -8,7 +8,6 @@ import { LuArrowLeft, LuSave } from 'react-icons/lu'
 import { toaster } from '@/Snippets/toaster'
 import GeneralInfoTab from '../Components/ProcessForm/GeneralInfoTab'
 import CostsTab from '../Components/ProcessForm/CostsTab'
-import ProductivityTab from '../Components/ProcessForm/ProductivityTab'
 import ImpactTab from '../Components/ProcessForm/ImpactTab'
 import { processFormDefaults, processFormSchema, type ProcessFormValues } from '../Forms/ProcessFormSchema'
 import { useCreateProcessMutation } from '../Services/Api'
@@ -16,7 +15,6 @@ import { useCreateProcessMutation } from '../Services/Api'
 const tabs = [
   { key: 'general', label: 'Informazioni Generali' },
   { key: 'costs', label: 'Costi e Operativita' },
-  { key: 'productivity', label: 'Errori e Produttivita' },
   { key: 'impact', label: 'Valutazione Impatto' },
 ] as const
 
@@ -46,7 +44,6 @@ export default function BenefitCalculationView() {
   const tabContent: Record<TabKey, React.ReactNode> = {
     general: <GeneralInfoTab form={form} />,
     costs: <CostsTab form={form} />,
-    productivity: <ProductivityTab form={form} />,
     impact: <ImpactTab form={form} />,
   }
 
