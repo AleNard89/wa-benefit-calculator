@@ -860,6 +860,88 @@ func (s *Service) AutoDetectProcessQueueMaps(ctx context.Context, tx pgx.Tx, com
 	return nil
 }
 
+// GetDashboardStats returns aggregated job stats per bot and recent job executions.
+func (s *Service) GetDashboardStats(companyID int) (*DashboardStats, error) {
+	database := db.DB()
+	ctx := context.Background()
+
+	tx, err := database.C.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	if err := s.setTenant(ctx, tx, companyID); err != nil {
+		return nil, err
+	}
+
+	// Bot stats grouped by process_name
+	statsQuery := `SELECT
+		COALESCE(process_name, 'N/A') AS process_name,
+		COUNT(*) AS total,
+		COUNT(*) FILTER (WHERE state = 'Successful') AS successful,
+		COUNT(*) FILTER (WHERE state = 'Faulted') AS faulted,
+		COUNT(*) FILTER (WHERE state = 'Running') AS running
+	FROM orchestrator_job_executions
+	WHERE company_id = $1
+	GROUP BY process_name
+	ORDER BY total DESC`
+
+	rows, err := tx.Query(ctx, statsQuery, companyID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var botStats []BotStat
+	var totalJobs, totalSuccessful, totalFaulted, totalRunning int
+	for rows.Next() {
+		var bs BotStat
+		if err := rows.Scan(&bs.ProcessName, &bs.Total, &bs.Successful, &bs.Faulted, &bs.Running); err != nil {
+			return nil, err
+		}
+		if bs.Total > 0 {
+			bs.SuccessRate = float64(bs.Successful) / float64(bs.Total) * 100
+			bs.ErrorRate = float64(bs.Faulted) / float64(bs.Total) * 100
+		}
+		totalJobs += bs.Total
+		totalSuccessful += bs.Successful
+		totalFaulted += bs.Faulted
+		totalRunning += bs.Running
+		botStats = append(botStats, bs)
+	}
+	rows.Close()
+
+	if botStats == nil {
+		botStats = []BotStat{}
+	}
+
+	// Recent 10 job executions
+	recentQuery := `SELECT * FROM orchestrator_job_executions
+		WHERE company_id = $1
+		ORDER BY start_time DESC NULLS LAST
+		LIMIT 10`
+
+	recentRows, err := tx.Query(ctx, recentQuery, companyID)
+	if err != nil {
+		return nil, err
+	}
+
+	recentJobs := make([]JobExecution, 0)
+	if err := pgxscan.ScanAll(&recentJobs, recentRows); err != nil {
+		return nil, err
+	}
+
+	return &DashboardStats{
+		BotStats:   botStats,
+		RecentJobs: recentJobs,
+		TotalJobs:  totalJobs,
+		Successful: totalSuccessful,
+		Faulted:    totalFaulted,
+		Running:    totalRunning,
+	}, tx.Commit(ctx)
+}
+
 func (s *Service) UpsertSchedule(ctx context.Context, tx pgx.Tx, sched *ProcessSchedule) error {
 	database := db.DB()
 	sql, args, err := database.Builder.

@@ -146,6 +146,25 @@ export interface ProcessQueueMapForm {
   queueName: string
 }
 
+export interface BotStat {
+  processName: string
+  total: number
+  successful: number
+  faulted: number
+  running: number
+  successRate: number
+  errorRate: number
+}
+
+export interface OrchestratorDashboardStats {
+  botStats: BotStat[]
+  recentJobs: JobExecution[]
+  totalJobs: number
+  successful: number
+  faulted: number
+  running: number
+}
+
 export interface QueueItemFilters {
   status?: string
   connectorId?: number

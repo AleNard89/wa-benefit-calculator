@@ -177,6 +177,24 @@ func syncConnector(c *gin.Context) {
 
 var SyncConnectorHandler = d.SuperuserRequired(syncConnector)
 
+// --- Dashboard Stats (all authenticated users) ---
+
+func getDashboardStats(c *gin.Context) {
+	companyID := requireCompanyID(c)
+	if companyID == 0 {
+		return
+	}
+	svc := &Service{}
+	stats, err := svc.GetDashboardStats(companyID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, httpx.ErrorResponse{Message: httpx.GetErrorMessage(err)})
+		return
+	}
+	c.JSON(http.StatusOK, stats)
+}
+
+var GetDashboardStats = d.AuthenticationRequired(getDashboardStats)
+
 // --- Process Names (all authenticated users) ---
 
 func listProcessNames(c *gin.Context) {

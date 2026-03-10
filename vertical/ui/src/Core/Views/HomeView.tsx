@@ -1,17 +1,35 @@
-import { Box, Flex, Text } from '@chakra-ui/react'
+import { Badge, Box, Flex, Text } from '@chakra-ui/react'
 import { useNavigate } from 'react-router-dom'
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
+import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend } from 'recharts'
 
 import { useCurrentUser } from '@/Auth/Hooks'
 import { useProcessesQuery, useProcessStatsQuery } from '@/Processes/Services/Api'
+import { useOrchestratorDashboardStatsQuery } from '@/Orchestrator/api'
 import { formatCurrency, statusLabelMap } from '@/Processes/Utils'
 import type { ProcessStats } from '@/Processes/Types'
+import type { BotStat, JobExecution } from '@/Orchestrator/types'
 
 const STATUS_COLORS: Record<string, string> = {
   'Da Valutare': '#86868b',
   'In Analisi': '#007aff',
   'In Corso': '#ff9500',
   'Produzione': '#34c759',
+}
+
+const JOB_STATE_COLORS: Record<string, string> = {
+  Successful: '#34c759',
+  Faulted: '#ff3b30',
+  Stopped: '#ff9500',
+  Running: '#007aff',
+  Pending: '#86868b',
+}
+
+const JOB_STATE_LABELS: Record<string, string> = {
+  Successful: 'Completato',
+  Faulted: 'Errore',
+  Stopped: 'Fermato',
+  Running: 'In esecuzione',
+  Pending: 'In attesa',
 }
 
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
@@ -63,11 +81,116 @@ function StatusChart({ stats }: { stats: ProcessStats }) {
   )
 }
 
+function truncateName(name: string, max = 20): string {
+  return name.length > max ? name.substring(0, max) + '...' : name
+}
+
+function BotStatsChart({ botStats }: { botStats: BotStat[] }) {
+  const data = botStats.slice(0, 10).map((b) => ({
+    name: truncateName(b.processName),
+    fullName: b.processName,
+    Completati: b.successful,
+    Errori: b.faulted,
+    'In esecuzione': b.running,
+  }))
+
+  if (data.length === 0) {
+    return (
+      <Flex align="center" justify="center" h="200px">
+        <Text fontSize="13px" color="#86868b">Nessun dato disponibile dall'Orchestrator</Text>
+      </Flex>
+    )
+  }
+
+  return (
+    <ResponsiveContainer width="100%" height={280}>
+      <BarChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+        <XAxis dataKey="name" fontSize={11} tick={{ fill: '#86868b' }} />
+        <YAxis fontSize={11} tick={{ fill: '#86868b' }} />
+        <Tooltip
+          contentStyle={{ fontSize: '12px', borderRadius: '8px', border: '1px solid #f0f0f2' }}
+          labelFormatter={(_, payload) => payload?.[0]?.payload?.fullName || ''}
+        />
+        <Legend wrapperStyle={{ fontSize: '12px' }} />
+        <Bar dataKey="Completati" fill="#34c759" radius={[3, 3, 0, 0]} />
+        <Bar dataKey="Errori" fill="#ff3b30" radius={[3, 3, 0, 0]} />
+        <Bar dataKey="In esecuzione" fill="#007aff" radius={[3, 3, 0, 0]} />
+      </BarChart>
+    </ResponsiveContainer>
+  )
+}
+
+function formatJobDate(d?: string): string {
+  if (!d) return '-'
+  return new Date(d).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
+}
+
+function formatDuration(start?: string, end?: string): string {
+  if (!start || !end) return '-'
+  const ms = new Date(end).getTime() - new Date(start).getTime()
+  if (ms < 0) return '-'
+  const secs = Math.floor(ms / 1000)
+  if (secs < 60) return `${secs}s`
+  const mins = Math.floor(secs / 60)
+  const remSecs = secs % 60
+  if (mins < 60) return `${mins}m ${remSecs}s`
+  const hours = Math.floor(mins / 60)
+  const remMins = mins % 60
+  return `${hours}h ${remMins}m`
+}
+
+function RecentJobsTable({ jobs }: { jobs: JobExecution[] }) {
+  if (jobs.length === 0) {
+    return (
+      <Flex align="center" justify="center" h="180px">
+        <Text fontSize="13px" color="#86868b">Nessuna esecuzione recente</Text>
+      </Flex>
+    )
+  }
+
+  return (
+    <Flex direction="column" gap={0}>
+      <Flex px={2} py={2} borderBottom="2px solid #f0f0f2" gap={3} fontSize="11px" fontWeight="700" color="#86868b" textTransform="uppercase" letterSpacing="0.5px">
+        <Box flex={2}>Bot</Box>
+        <Box flex={1}>Stato</Box>
+        <Box flex={1}>Inizio</Box>
+        <Box flex={0.8}>Durata</Box>
+      </Flex>
+      {jobs.map((job, i) => (
+        <Flex
+          key={job.id}
+          align="center"
+          py={2.5}
+          px={2}
+          borderTop={i > 0 ? '1px solid #f0f0f2' : 'none'}
+          gap={3}
+          fontSize="13px"
+        >
+          <Box flex={2} fontWeight="500" color="#1d1d1f" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap">
+            {job.processName || '-'}
+          </Box>
+          <Box flex={1}>
+            <Badge
+              colorPalette={JOB_STATE_COLORS[job.state] === '#34c759' ? 'green' : JOB_STATE_COLORS[job.state] === '#ff3b30' ? 'red' : JOB_STATE_COLORS[job.state] === '#ff9500' ? 'orange' : JOB_STATE_COLORS[job.state] === '#007aff' ? 'blue' : 'gray'}
+              fontSize="10px"
+            >
+              {JOB_STATE_LABELS[job.state] || job.state}
+            </Badge>
+          </Box>
+          <Box flex={1} color="#86868b" fontSize="12px">{formatJobDate(job.startTime)}</Box>
+          <Box flex={0.8} color="#86868b" fontSize="12px">{formatDuration(job.startTime, job.endTime)}</Box>
+        </Flex>
+      ))}
+    </Flex>
+  )
+}
+
 export default function HomeView() {
   const user = useCurrentUser()
   const navigate = useNavigate()
   const { data: stats } = useProcessStatsQuery()
   const { data: recentProcesses } = useProcessesQuery({ limit: 5, sortBy: 'created_at', order: 'desc' })
+  const { data: orchStats } = useOrchestratorDashboardStatsQuery()
 
   return (
     <Box>
@@ -87,7 +210,7 @@ export default function HomeView() {
         </Flex>
       )}
 
-      <Flex gap={4} wrap="wrap">
+      <Flex gap={4} wrap="wrap" mb={6}>
         {/* Chart */}
         <Box
           bg="white"
@@ -176,6 +299,50 @@ export default function HomeView() {
           )}
         </Box>
       </Flex>
+
+      {/* Orchestrator Section */}
+      {orchStats && orchStats.totalJobs > 0 && (
+        <>
+          <Text fontSize="20px" fontWeight="700" color="#1d1d1f" mb={3}>Orchestrator</Text>
+
+          <Flex gap={3} mb={4} wrap="wrap">
+            <StatCard label="Esecuzioni Totali" value={orchStats.totalJobs} color="#1d1d1f" />
+            <StatCard label="Completate" value={orchStats.successful} color="#34c759" />
+            <StatCard label="Errori" value={orchStats.faulted} color="#ff3b30" />
+            <StatCard label="In Esecuzione" value={orchStats.running} color="#007aff" />
+          </Flex>
+
+          <Flex gap={4} wrap="wrap">
+            <Box
+              bg="white"
+              borderRadius="12px"
+              boxShadow="0 1px 4px rgba(0,0,0,0.06)"
+              p={5}
+              flex={1}
+              minW="400px"
+            >
+              <Text fontSize="15px" fontWeight="600" color="#1d1d1f" mb={3}>
+                Esecuzioni per Bot
+              </Text>
+              <BotStatsChart botStats={orchStats.botStats} />
+            </Box>
+
+            <Box
+              bg="white"
+              borderRadius="12px"
+              boxShadow="0 1px 4px rgba(0,0,0,0.06)"
+              p={5}
+              flex={1}
+              minW="400px"
+            >
+              <Text fontSize="15px" fontWeight="600" color="#1d1d1f" mb={3}>
+                Ultime Esecuzioni
+              </Text>
+              <RecentJobsTable jobs={orchStats.recentJobs} />
+            </Box>
+          </Flex>
+        </>
+      )}
     </Box>
   )
 }

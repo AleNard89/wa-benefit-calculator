@@ -10,6 +10,9 @@ func RoutesRegister(router *gin.RouterGroup) {
 	router.POST("/connectors/:id/test", TestConnector)
 	router.POST("/connectors/:id/sync", SyncConnectorHandler)
 
+	// Dashboard stats (all authenticated users)
+	router.GET("/dashboard-stats", GetDashboardStats)
+
 	// Process names (all authenticated users)
 	router.GET("/process-names", ListProcessNames)
 	router.GET("/bot-names", ListBotNames)

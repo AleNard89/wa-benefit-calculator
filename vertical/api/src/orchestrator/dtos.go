@@ -111,6 +111,27 @@ type ConnectorResponse struct {
 	UpdatedAt        string         `json:"updatedAt"`
 }
 
+// BotStat holds aggregated job stats for a single bot (process_name).
+type BotStat struct {
+	ProcessName string  `json:"processName"`
+	Total       int     `json:"total"`
+	Successful  int     `json:"successful"`
+	Faulted     int     `json:"faulted"`
+	Running     int     `json:"running"`
+	SuccessRate float64 `json:"successRate"`
+	ErrorRate   float64 `json:"errorRate"`
+}
+
+// DashboardStats holds orchestrator overview data for the home dashboard.
+type DashboardStats struct {
+	BotStats   []BotStat      `json:"botStats"`
+	RecentJobs []JobExecution `json:"recentJobs"`
+	TotalJobs  int            `json:"totalJobs"`
+	Successful int            `json:"successful"`
+	Faulted    int            `json:"faulted"`
+	Running    int            `json:"running"`
+}
+
 func NewConnectorResponse(c Connector) ConnectorResponse {
 	cfg, _ := c.GetUiPathConfig()
 	return ConnectorResponse{

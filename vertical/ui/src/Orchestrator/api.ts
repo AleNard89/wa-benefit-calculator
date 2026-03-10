@@ -5,6 +5,7 @@ import type {
   ConnectorResponse,
   JobExecution,
   JobFilters,
+  OrchestratorDashboardStats,
   PaginatedResponse,
   ProcessQueueMap,
   ProcessQueueMapForm,
@@ -38,6 +39,12 @@ const extendedApi = api.injectEndpoints({
     syncConnector: builder.mutation<{ message: string }, number>({
       query: (id) => ({ url: `${prefix}/connectors/${id}/sync`, method: 'POST' }),
       invalidatesTags: ['Jobs', 'QueueItems', 'QueueDefinitions', 'Schedules', 'ProcessNames'],
+    }),
+
+    // Dashboard Stats
+    orchestratorDashboardStats: builder.query<OrchestratorDashboardStats, void>({
+      query: () => `${prefix}/dashboard-stats`,
+      providesTags: ['Jobs', 'HasCompanyHeader'],
     }),
 
     // Process Names (prefixes)
@@ -129,6 +136,7 @@ const extendedApi = api.injectEndpoints({
 })
 
 export const {
+  useOrchestratorDashboardStatsQuery,
   useConnectorsQuery,
   useCreateConnectorMutation,
   useUpdateConnectorMutation,
