@@ -57,8 +57,8 @@ Built to help RPA teams assess process automation candidates, calculate expected
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/AleNard89/BenefitCalculator.git
-cd BenefitCalculator
+git clone https://github.com/AleNard89/wa-benefit-calculator.git
+cd wa-benefit-calculator
 
 # 2. Create your environment file
 cp .env.example .env.dev.local
