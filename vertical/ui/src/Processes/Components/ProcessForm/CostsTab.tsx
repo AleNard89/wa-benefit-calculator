@@ -1,5 +1,5 @@
 import { Box, Flex, Input, Text } from '@chakra-ui/react'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProcessFormValues } from '../../Forms/ProcessFormSchema'
 
@@ -135,8 +135,11 @@ export default function CostsTab({ form }: Props) {
     setValue('hourlyCost', ral > 0 ? Math.round((ral / 1720) * 100) / 100 : 0)
   }, [annualSalary, setValue])
 
-  // Set defaults when periodicity changes
+  // Set defaults only when periodicity actually changes
+  const prevPeriodicity = useRef(periodicity)
   useEffect(() => {
+    if (periodicity === prevPeriodicity.current) return
+    prevPeriodicity.current = periodicity
     const defaults = PERIODICITY_DEFAULTS[periodicity]
     if (defaults) {
       setValue('daysPerWeek', defaults.daysPerWeek)
