@@ -2,7 +2,6 @@ import { Badge, Box, Flex, Text } from '@chakra-ui/react'
 import { useNavigate } from 'react-router-dom'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 
-import { useCurrentUser } from '@/Auth/Hooks'
 import { useProcessesQuery, useProcessStatsQuery } from '@/Processes/Services/Api'
 import { useOrchestratorDashboardStatsQuery } from '@/Orchestrator/api'
 import { formatCurrency, statusLabelMap } from '@/Processes/Utils'
@@ -203,7 +202,6 @@ function RecentJobsTable({ jobs }: { jobs: JobExecution[] }) {
 }
 
 export default function HomeView() {
-  const user = useCurrentUser()
   const navigate = useNavigate()
   const { data: stats } = useProcessStatsQuery()
   const { data: recentProcesses } = useProcessesQuery({ limit: 5, sortBy: 'created_at', order: 'desc' })
@@ -211,11 +209,6 @@ export default function HomeView() {
 
   return (
     <Box>
-      <Text fontSize="24px" fontWeight="700" color="#1d1d1f">Dashboard</Text>
-      <Text fontSize="14px" color="#86868b" mt={1} mb={4}>
-        Benvenuto{user ? `, ${user.firstName} ${user.lastName}` : ''}
-      </Text>
-
       {/* Process KPI Cards */}
       {stats && (
         <Flex gap={2} mb={4} wrap="wrap">
