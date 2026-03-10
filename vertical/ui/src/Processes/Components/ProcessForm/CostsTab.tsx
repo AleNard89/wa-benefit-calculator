@@ -26,24 +26,133 @@ function Field({ label, error, children }: { label: string; error?: string; chil
   )
 }
 
+const PERIODICITY_DEFAULTS: Record<string, { daysPerWeek: number; weeksPerYear: number }> = {
+  Giornaliera: { daysPerWeek: 5, weeksPerYear: 44 },
+  Settimanale: { daysPerWeek: 1, weeksPerYear: 44 },
+  Mensile: { daysPerWeek: 1, weeksPerYear: 12 },
+  Trimestrale: { daysPerWeek: 1, weeksPerYear: 4 },
+  Annuale: { daysPerWeek: 1, weeksPerYear: 1 },
+}
+
+function PeriodicityFields({ form, periodicity }: { form: UseFormReturn<ProcessFormValues>; periodicity: string }) {
+  const { register, formState: { errors } } = form
+
+  switch (periodicity) {
+    case 'Giornaliera':
+      return (
+        <Flex gap={4}>
+          <Field label="Ore / Minuti al Giorno *" error={errors.hoursPerDay?.message}>
+            <Input type="number" step="0.25" {...register('hoursPerDay', { valueAsNumber: true })} min={0} max={24} placeholder="es. 2.5" {...inputStyle} />
+          </Field>
+          <Field label="Volte al Giorno *" error={errors.activitiesPerDay?.message}>
+            <Input type="number" {...register('activitiesPerDay', { valueAsNumber: true })} min={1} placeholder="es. 3" {...inputStyle} />
+          </Field>
+          <Field label="Giorni / Settimana" error={errors.daysPerWeek?.message}>
+            <Input type="number" {...register('daysPerWeek', { valueAsNumber: true })} min={1} max={7} {...inputStyle} />
+          </Field>
+          <Field label="Settimane / Anno" error={errors.weeksPerYear?.message}>
+            <Input type="number" {...register('weeksPerYear', { valueAsNumber: true })} min={1} max={52} {...inputStyle} />
+          </Field>
+        </Flex>
+      )
+    case 'Settimanale':
+      return (
+        <Flex gap={4}>
+          <Field label="Ore per Sessione *" error={errors.hoursPerDay?.message}>
+            <Input type="number" step="0.25" {...register('hoursPerDay', { valueAsNumber: true })} min={0} max={24} placeholder="es. 3" {...inputStyle} />
+          </Field>
+          <Field label="Giorni / Settimana *" error={errors.daysPerWeek?.message}>
+            <Input type="number" {...register('daysPerWeek', { valueAsNumber: true })} min={1} max={7} {...inputStyle} />
+          </Field>
+          <Field label="Settimane / Anno" error={errors.weeksPerYear?.message}>
+            <Input type="number" {...register('weeksPerYear', { valueAsNumber: true })} min={1} max={52} {...inputStyle} />
+          </Field>
+        </Flex>
+      )
+    case 'Mensile':
+      return (
+        <Flex gap={4}>
+          <Field label="Ore per Sessione *" error={errors.hoursPerDay?.message}>
+            <Input type="number" step="0.25" {...register('hoursPerDay', { valueAsNumber: true })} min={0} max={24} placeholder="es. 4" {...inputStyle} />
+          </Field>
+          <Field label="Giorni / Mese *" error={errors.daysPerWeek?.message}>
+            <Input type="number" {...register('daysPerWeek', { valueAsNumber: true })} min={1} max={31} {...inputStyle} />
+          </Field>
+          <Field label="Mesi / Anno" error={errors.weeksPerYear?.message}>
+            <Input type="number" {...register('weeksPerYear', { valueAsNumber: true })} min={1} max={12} {...inputStyle} />
+          </Field>
+        </Flex>
+      )
+    case 'Trimestrale':
+      return (
+        <Flex gap={4}>
+          <Field label="Ore per Sessione *" error={errors.hoursPerDay?.message}>
+            <Input type="number" step="0.25" {...register('hoursPerDay', { valueAsNumber: true })} min={0} max={24} placeholder="es. 8" {...inputStyle} />
+          </Field>
+          <Field label="Giorni / Trimestre *" error={errors.daysPerWeek?.message}>
+            <Input type="number" {...register('daysPerWeek', { valueAsNumber: true })} min={1} max={90} {...inputStyle} />
+          </Field>
+          <Field label="Trimestri / Anno" error={errors.weeksPerYear?.message}>
+            <Input type="number" {...register('weeksPerYear', { valueAsNumber: true })} min={1} max={4} {...inputStyle} />
+          </Field>
+        </Flex>
+      )
+    case 'Annuale':
+      return (
+        <Flex gap={4}>
+          <Field label="Ore per Sessione *" error={errors.hoursPerDay?.message}>
+            <Input type="number" step="0.25" {...register('hoursPerDay', { valueAsNumber: true })} min={0} max={24} placeholder="es. 8" {...inputStyle} />
+          </Field>
+          <Field label="Giorni / Anno *" error={errors.daysPerWeek?.message}>
+            <Input type="number" {...register('daysPerWeek', { valueAsNumber: true })} min={1} max={365} {...inputStyle} />
+          </Field>
+        </Flex>
+      )
+    default:
+      return (
+        <Flex bg="#f5f5f7" borderRadius="10px" px={4} py={3}>
+          <Text fontSize="13px" color="#86868b">
+            Seleziona la periodicita nel tab "Informazioni Generali" per configurare i parametri operativi.
+          </Text>
+        </Flex>
+      )
+  }
+}
+
 export default function CostsTab({ form }: Props) {
   const { register, watch, setValue, formState: { errors } } = form
 
+  const periodicity = watch('periodicity')
   const hoursPerDay = watch('hoursPerDay')
   const daysPerWeek = watch('daysPerWeek')
   const weeksPerYear = watch('weeksPerYear')
+  const activitiesPerDay = watch('activitiesPerDay')
 
+  // Set defaults when periodicity changes
+  useEffect(() => {
+    const defaults = PERIODICITY_DEFAULTS[periodicity]
+    if (defaults) {
+      setValue('daysPerWeek', defaults.daysPerWeek)
+      setValue('weeksPerYear', defaults.weeksPerYear)
+      if (periodicity !== 'Giornaliera') {
+        setValue('activitiesPerDay', 1)
+      }
+    }
+  }, [periodicity, setValue])
+
+  // Auto-compute backend fields
   useEffect(() => {
     const h = hoursPerDay || 0
     const d = daysPerWeek || 0
-    const w = weeksPerYear || 0
-    setValue('timePerActivity', Math.round(h * 60))
-    setValue('activitiesPerDay', 1)
+    const w = periodicity === 'Annuale' ? 1 : (weeksPerYear || 0)
+    const acts = periodicity === 'Giornaliera' ? (activitiesPerDay || 1) : 1
+    setValue('timePerActivity', Math.round((h / acts) * 60))
+    if (periodicity !== 'Giornaliera') setValue('activitiesPerDay', 1)
     setValue('workingDaysPerYear', d * w)
-  }, [hoursPerDay, daysPerWeek, weeksPerYear, setValue])
+  }, [hoursPerDay, daysPerWeek, weeksPerYear, activitiesPerDay, periodicity, setValue])
 
-  const totalDays = (daysPerWeek || 0) * (weeksPerYear || 0)
-  const totalHoursYear = (hoursPerDay || 0) * totalDays
+  const totalDays = (daysPerWeek || 0) * (periodicity === 'Annuale' ? 1 : (weeksPerYear || 0))
+  const totalHoursYear = (hoursPerDay || 0) * totalDays * (periodicity === 'Giornaliera' ? (activitiesPerDay || 1) : 1)
 
   return (
     <Flex direction="column" gap={5}>
@@ -65,24 +174,22 @@ export default function CostsTab({ form }: Props) {
       <Box h="1px" bg="#f0f0f2" />
 
       <Box>
-        <Text fontSize="15px" fontWeight="700" color="#1d1d1f" mb={4}>Parametri Operativi</Text>
+        <Flex align="center" gap={3} mb={4}>
+          <Text fontSize="15px" fontWeight="700" color="#1d1d1f">Parametri Operativi</Text>
+          {periodicity && (
+            <Text fontSize="12px" color="#007aff" fontWeight="500">
+              Periodicita: {periodicity}
+            </Text>
+          )}
+        </Flex>
+
         <Flex direction="column" gap={4}>
-          <Flex gap={4}>
-            <Field label="Costo Orario Personale (EUR/h) *" error={errors.hourlyCost?.message}>
-              <Input type="number" step="0.01" {...register('hourlyCost', { valueAsNumber: true })} {...inputStyle} />
-            </Field>
-            <Field label="Ore al Giorno dedicate *" error={errors.hoursPerDay?.message}>
-              <Input type="number" step="0.5" {...register('hoursPerDay', { valueAsNumber: true })} min={0} max={24} {...inputStyle} />
-            </Field>
-          </Flex>
-          <Flex gap={4}>
-            <Field label="Giorni alla Settimana *" error={errors.daysPerWeek?.message}>
-              <Input type="number" {...register('daysPerWeek', { valueAsNumber: true })} min={1} max={7} {...inputStyle} />
-            </Field>
-            <Field label="Settimane all'Anno *" error={errors.weeksPerYear?.message}>
-              <Input type="number" {...register('weeksPerYear', { valueAsNumber: true })} min={1} max={52} {...inputStyle} />
-            </Field>
-          </Flex>
+          <Field label="Costo Orario Personale (EUR/h) *" error={errors.hourlyCost?.message}>
+            <Input type="number" step="0.01" {...register('hourlyCost', { valueAsNumber: true })} {...inputStyle} />
+          </Field>
+
+          <PeriodicityFields form={form} periodicity={periodicity} />
+
           {totalHoursYear > 0 && (
             <Flex gap={4} bg="#f5f5f7" borderRadius="10px" px={4} py={2.5}>
               <Box flex={1}>
