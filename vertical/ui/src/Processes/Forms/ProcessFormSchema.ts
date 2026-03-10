@@ -28,7 +28,7 @@ export const processFormSchema = z.object({
   activitiesPerDay: z.number().min(0),
   workingDaysPerYear: z.number().min(0),
   hoursPerDay: z.number().min(0),
-  daysPerWeek: z.number().min(1).max(7),
+  daysPerWeek: z.number().min(1).max(365),
   weeksPerYear: z.number().min(1).max(52),
 
   currentErrorRate: z.number().min(0).max(100),
