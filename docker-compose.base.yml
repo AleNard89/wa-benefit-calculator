@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: ${PROJECT_NAME}-postgres
+    restart: unless-stopped
+
+  redis:
+    container_name: ${PROJECT_NAME}-redis
+    image: redis:latest
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+  migrations:
+    container_name: ${PROJECT_NAME}-migrations
+    depends_on:
+      - postgres
+
+  api:
+    container_name: ${PROJECT_NAME}-api
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - migrations
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local

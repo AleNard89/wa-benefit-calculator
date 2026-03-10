@@ -1,0 +1,17 @@
+{
+  "host": "localhost:8082",
+  "scheme": "http",
+  "baseUrl": "http://localhost:8082/api",
+  "environment": "test",
+  "api": {
+    "allowedOrigins": ["http://localhost:5174"]
+  },
+  "jwt": {
+    "accessTokenValidityMinutes": 10,
+    "refreshTokenValidityMinutes": 87600
+  },
+  "ui": {
+    "url": "http://localhost:5174",
+    "passwordResetUrl": "http://localhost:5174/reset-password/confirm"
+  }
+}

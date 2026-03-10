@@ -1,0 +1,76 @@
+services:
+  postgres:
+    ports:
+      - "5435:5432"
+    env_file:
+      - .env.dev.local
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_preload_libraries=pg_stat_statements"
+      - "-c"
+      - "pg_stat_statements.track=all"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  migrations:
+    image: ${PROJECT_NAME}-migrations
+    build:
+      context: ./vertical/migrations
+      dockerfile: ./docker/Dockerfile.dev
+    env_file:
+      - .env.dev.local
+    volumes:
+      - ./vertical/migrations/src:/go/migrations/
+    command: ["sh", "-c", "migrate -database \"$POSTGRESQL_URL\" -path postgres up && tail -f /dev/null"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  redis:
+    ports:
+      - "6381:6379"
+
+  api:
+    image: ${PROJECT_NAME}-api
+    build:
+      context: ./vertical/api/
+      dockerfile: ./docker/Dockerfile.dev
+    ports:
+      - "8082:8080"
+    env_file:
+      - .env.dev.local
+    environment:
+      - GOGC=50
+      - TLS_SKIP_VERIFY=true
+    volumes:
+      - ./vertical/api/src:/go/app/
+      - ./logs:/go/logs/
+      - ./vertical/media:/data/companies
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  ui:
+    image: ${PROJECT_NAME}-ui
+    container_name: ${PROJECT_NAME}-ui
+    build:
+      context: ./vertical/ui/
+      dockerfile: ./docker/Dockerfile.dev
+    ports:
+      - "5174:5173"
+    volumes:
+      - ./vertical/ui:/app
+    env_file:
+      - .env.dev.local
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    command: ["sh", "-c", "yarn install && yarn dev --host"]
+    tty: true

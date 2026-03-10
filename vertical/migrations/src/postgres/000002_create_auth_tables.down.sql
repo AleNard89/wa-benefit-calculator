@@ -1,0 +1,10 @@
+BEGIN;
+
+DROP TABLE IF EXISTS auth_roles_permissions CASCADE;
+DROP TABLE IF EXISTS auth_users_roles CASCADE;
+DROP TABLE IF EXISTS auth_roles CASCADE;
+DROP TABLE IF EXISTS auth_users_companies CASCADE;
+DROP TABLE IF EXISTS auth_users CASCADE;
+DROP TABLE IF EXISTS auth_permissions CASCADE;
+
+COMMIT;

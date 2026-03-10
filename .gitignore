@@ -1,0 +1,29 @@
+.DS_Store
+.env
+.env.local
+.env.*.local
+__pycache__/
+*.pyc
+venv/
+.venv/
+*.log
+.idea/
+.vscode/
+*.xlsx
+*.pptx
+*.zip
+*.csv
+*.pdf
+*.docx
+*.db
+
+# Session/planning docs (may contain client data)
+SESSION_SUMMARY.md
+MIGRATION_PLAN.md
+
+# Webapp
+vertical/ui/node_modules/
+vertical/ui/dist/
+vertical/media/
+logs/
+data/

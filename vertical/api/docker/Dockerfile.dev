@@ -1,0 +1,21 @@
+FROM golang:1.24-alpine
+
+RUN apk update && apk add --no-cache git ca-certificates
+
+ENV GIT_SSL_NO_VERIFY=1
+ENV GONOSUMCHECK=*
+ENV GONOSUMDB=*
+ENV GOINSECURE=*
+ENV GOPROXY=direct
+
+RUN go install github.com/cespare/reflex@latest
+
+WORKDIR /go/app
+
+COPY src/ .
+
+RUN go mod download
+
+EXPOSE 8080
+
+CMD ["reflex", "-r", "\\.go$", "-s", "-R", "/data/", "-R", "/tmp/", "--", "sh", "-c", "go build -o /tmp/app main.go && /tmp/app"]

@@ -1,0 +1,81 @@
+import { z } from 'zod'
+
+export const processFormSchema = z.object({
+  processName: z.string().min(1, 'Nome processo obbligatorio'),
+  processDescription: z.string(),
+  proposer: z.string().min(1, 'Proponente obbligatorio'),
+  area: z.string().min(1, 'Area obbligatoria'),
+  areaId: z.number().nullable(),
+  responsibleManager: z.string().min(1, 'Manager responsabile obbligatorio'),
+  department: z.string(),
+
+  systemsInvolved: z.number().min(1, 'Minimo 1 sistema'),
+  processType: z.string().min(1, 'Tipo processo obbligatorio'),
+  periodicity: z.string().min(1, 'Periodicita obbligatoria'),
+  frequentChanges: z.boolean(),
+  technology: z.array(z.string()).min(1, 'Seleziona almeno una tecnologia'),
+  technologyOther: z.string(),
+  linkedBots: z.array(z.string()),
+  botNotes: z.string(),
+
+  implementationCost: z.number().min(0, 'Deve essere >= 0'),
+  trainingCost: z.number().min(0),
+  maintenanceCost: z.number().min(0),
+
+  hourlyCost: z.number().min(0),
+  timePerActivity: z.number().min(0),
+  activitiesPerDay: z.number().min(0),
+  workingDaysPerYear: z.number().min(0),
+
+  currentErrorRate: z.number().min(0).max(100),
+  postErrorRate: z.number().min(0).max(100),
+  errorCost: z.number().min(0),
+
+  productivityFactor: z.number().min(0),
+  timeReductionFactor: z.number().min(0).max(100),
+
+  dataQualityScore: z.number().min(1).max(5),
+  auditScore: z.number().min(1).max(5),
+  customerExperienceScore: z.number().min(1).max(5),
+  errorReductionScore: z.number().min(1).max(5),
+  standardizationScore: z.number().min(1).max(5),
+  scalabilityScore: z.number().min(1).max(5),
+})
+
+export type ProcessFormValues = z.infer<typeof processFormSchema>
+
+export const processFormDefaults: ProcessFormValues = {
+  processName: '',
+  processDescription: '',
+  proposer: '',
+  area: '',
+  areaId: null,
+  responsibleManager: '',
+  department: '',
+  systemsInvolved: 1,
+  processType: '',
+  periodicity: '',
+  frequentChanges: false,
+  technology: [],
+  technologyOther: '',
+  linkedBots: [],
+  botNotes: '',
+  implementationCost: 0,
+  trainingCost: 0,
+  maintenanceCost: 0,
+  hourlyCost: 0,
+  timePerActivity: 0,
+  activitiesPerDay: 0,
+  workingDaysPerYear: 0,
+  currentErrorRate: 0,
+  postErrorRate: 0,
+  errorCost: 0,
+  productivityFactor: 0,
+  timeReductionFactor: 0,
+  dataQualityScore: 3,
+  auditScore: 3,
+  customerExperienceScore: 3,
+  errorReductionScore: 3,
+  standardizationScore: 3,
+  scalabilityScore: 3,
+}
