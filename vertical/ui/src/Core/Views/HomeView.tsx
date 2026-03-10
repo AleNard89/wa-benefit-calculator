@@ -43,9 +43,9 @@ const ROW_HEIGHT = 280
 
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <Box {...CARD_STYLE} flex={1} minW="120px">
-      <Text fontSize="11px" color="#86868b" mb={1}>{label}</Text>
-      <Text fontSize="24px" fontWeight="700" color={color}>{value}</Text>
+    <Box {...CARD_STYLE} flex={1} minW="120px" py={2} px={4}>
+      <Text fontSize="10px" color="#86868b" mb={0}>{label}</Text>
+      <Text fontSize="20px" fontWeight="700" color={color}>{value}</Text>
     </Box>
   )
 }
