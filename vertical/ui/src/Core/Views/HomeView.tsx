@@ -1,13 +1,13 @@
 import { Badge, Box, Flex, Text } from '@chakra-ui/react'
 import { useNavigate } from 'react-router-dom'
-import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend } from 'recharts'
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 
 import { useCurrentUser } from '@/Auth/Hooks'
 import { useProcessesQuery, useProcessStatsQuery } from '@/Processes/Services/Api'
 import { useOrchestratorDashboardStatsQuery } from '@/Orchestrator/api'
 import { formatCurrency, statusLabelMap } from '@/Processes/Utils'
 import type { ProcessStats } from '@/Processes/Types'
-import type { BotStat, JobExecution } from '@/Orchestrator/types'
+import type { JobExecution } from '@/Orchestrator/types'
 
 const STATUS_COLORS: Record<string, string> = {
   'Da Valutare': '#86868b',
@@ -81,18 +81,18 @@ function StatusChart({ stats }: { stats: ProcessStats }) {
   )
 }
 
-function truncateName(name: string, max = 20): string {
-  return name.length > max ? name.substring(0, max) + '...' : name
+const BOT_CHART_COLORS: Record<string, string> = {
+  Completati: '#34c759',
+  Errori: '#ff3b30',
+  'In esecuzione': '#007aff',
 }
 
-function BotStatsChart({ botStats }: { botStats: BotStat[] }) {
-  const data = botStats.slice(0, 10).map((b) => ({
-    name: truncateName(b.processName),
-    fullName: b.processName,
-    Completati: b.successful,
-    Errori: b.faulted,
-    'In esecuzione': b.running,
-  }))
+function BotExecutionsPieChart({ totalJobs, successful, faulted, running }: { totalJobs: number; successful: number; faulted: number; running: number }) {
+  const data = [
+    { name: 'Completati', value: successful },
+    { name: 'Errori', value: faulted },
+    { name: 'In esecuzione', value: running },
+  ].filter((d) => d.value > 0)
 
   if (data.length === 0) {
     return (
@@ -103,19 +103,25 @@ function BotStatsChart({ botStats }: { botStats: BotStat[] }) {
   }
 
   return (
-    <ResponsiveContainer width="100%" height={280}>
-      <BarChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-        <XAxis dataKey="name" fontSize={11} tick={{ fill: '#86868b' }} />
-        <YAxis fontSize={11} tick={{ fill: '#86868b' }} />
-        <Tooltip
-          contentStyle={{ fontSize: '12px', borderRadius: '8px', border: '1px solid #f0f0f2' }}
-          labelFormatter={(_, payload) => payload?.[0]?.payload?.fullName || ''}
-        />
-        <Legend wrapperStyle={{ fontSize: '12px' }} />
-        <Bar dataKey="Completati" fill="#34c759" radius={[3, 3, 0, 0]} />
-        <Bar dataKey="Errori" fill="#ff3b30" radius={[3, 3, 0, 0]} />
-        <Bar dataKey="In esecuzione" fill="#007aff" radius={[3, 3, 0, 0]} />
-      </BarChart>
+    <ResponsiveContainer width="100%" height={220}>
+      <PieChart>
+        <Pie
+          data={data}
+          dataKey="value"
+          nameKey="name"
+          cx="50%"
+          cy="50%"
+          innerRadius={50}
+          outerRadius={85}
+          paddingAngle={3}
+          label={({ name, value }) => `${name}: ${value}`}
+        >
+          {data.map((entry) => (
+            <Cell key={entry.name} fill={BOT_CHART_COLORS[entry.name] || '#86868b'} />
+          ))}
+        </Pie>
+        <Tooltip />
+      </PieChart>
     </ResponsiveContainer>
   )
 }
@@ -189,7 +195,7 @@ export default function HomeView() {
   const user = useCurrentUser()
   const navigate = useNavigate()
   const { data: stats } = useProcessStatsQuery()
-  const { data: recentProcesses } = useProcessesQuery({ limit: 5, sortBy: 'created_at', order: 'desc' })
+  const { data: recentProcesses } = useProcessesQuery({ limit: 3, sortBy: 'created_at', order: 'desc' })
   const { data: orchStats } = useOrchestratorDashboardStatsQuery()
 
   return (
@@ -322,9 +328,14 @@ export default function HomeView() {
               minW="400px"
             >
               <Text fontSize="15px" fontWeight="600" color="#1d1d1f" mb={3}>
-                Esecuzioni per Bot
+                Esecuzioni Bot
               </Text>
-              <BotStatsChart botStats={orchStats.botStats} />
+              <BotExecutionsPieChart
+                totalJobs={orchStats.totalJobs}
+                successful={orchStats.successful}
+                faulted={orchStats.faulted}
+                running={orchStats.running}
+              />
             </Box>
 
             <Box
