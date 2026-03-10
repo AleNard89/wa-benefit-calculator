@@ -19,11 +19,10 @@ interface Props {
 
 const kpiExplanations: Record<string, string> = {
   'ROI': 'Return on Investment = (Beneficio Netto Annuale / Costo Implementazione) x 100. Il beneficio netto e il risparmio annuale meno il costo di manutenzione.',
-  'Risparmio Annuale': 'Somma di: Risparmio Operativo + Riduzione Errori + Beneficio Produttivita.',
+  'Risparmio Annuale': 'Somma di: Risparmio Operativo + Beneficio Produttivita.',
   'Break-even': 'Mesi necessari per recuperare l\'investimento iniziale (implementazione + formazione + manutenzione) dato il beneficio netto mensile.',
   'Ore Risparmiate / Anno': 'Tempo per attivita (h) x Attivita al giorno x Giorni lavorativi x Fattore riduzione tempo (%).',
   'Risparmio Operativo': 'Costo annuale del lavoro manuale x Fattore riduzione tempo. Rappresenta il risparmio sul costo del personale.',
-  'Riduzione Errori': 'Attivita al giorno x Giorni lavorativi x (Tasso errore attuale - Tasso errore post) x Costo per errore.',
   'Beneficio Produttivita': '(Attivita post-automazione - Attivita attuali) x Giorni lavorativi x Valore per attivita. Misura il valore delle attivita aggiuntive rese possibili.',
   'Impact Score': 'Media dei 6 punteggi di valutazione impatto (Qualita Dati, Audit, Customer Experience, Riduzione Errori, Standardizzazione, Scalabilita). Scala 1-5.',
 }
@@ -95,7 +94,7 @@ export default function ProcessResults({ result, scores }: Props) {
         <Box
           flex={1}
           display="grid"
-          gridTemplateColumns="repeat(4, 1fr)"
+          gridTemplateColumns="repeat(3, 1fr)"
           gridTemplateRows="repeat(2, 1fr)"
           gap={2}
         >
@@ -104,8 +103,6 @@ export default function ProcessResults({ result, scores }: Props) {
           <KpiItem label="Break-even" value={result.breakEvenMonths != null ? `${result.breakEvenMonths} mesi` : 'N/A'} />
           <KpiItem label="Ore Risp. / Anno" value={formatNumber(result.hoursSavedAnnually)} />
           <KpiItem label="Risparmio Operativo" value={formatCurrency(result.operationalSavings)} />
-          <KpiItem label="Riduzione Errori" value={formatCurrency(result.errorReductionSavings)} />
-          <KpiItem label="Beneficio Produttivita" value={formatCurrency(result.productivityBenefit)} />
           <KpiItem label="Impact Score" value={`${formatNumber(result.impactScore)} / 5`} accent="#ff9500" />
         </Box>
 
