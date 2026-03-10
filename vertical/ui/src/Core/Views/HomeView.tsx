@@ -39,6 +39,8 @@ const CARD_STYLE = {
   p: 4,
 } as const
 
+const ROW_HEIGHT = 280
+
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <Box {...CARD_STYLE} flex={1} minW="120px">
@@ -207,20 +209,16 @@ export default function HomeView() {
   const { data: recentProcesses } = useProcessesQuery({ limit: 5, sortBy: 'created_at', order: 'desc' })
   const { data: orchStats } = useOrchestratorDashboardStatsQuery()
 
-  const hasOrchestrator = orchStats && orchStats.totalJobs > 0
-
   return (
-    <Flex direction="column" h="calc(100vh - 80px)">
-      <Box flexShrink={0}>
-        <Text fontSize="24px" fontWeight="700" color="#1d1d1f">Dashboard</Text>
-        <Text fontSize="14px" color="#86868b" mt={0.5} mb={3}>
-          Benvenuto{user ? `, ${user.firstName} ${user.lastName}` : ''}
-        </Text>
-      </Box>
+    <Box>
+      <Text fontSize="24px" fontWeight="700" color="#1d1d1f">Dashboard</Text>
+      <Text fontSize="14px" color="#86868b" mt={1} mb={4}>
+        Benvenuto{user ? `, ${user.firstName} ${user.lastName}` : ''}
+      </Text>
 
       {/* Process KPI Cards */}
       {stats && (
-        <Flex gap={2} mb={3} flexShrink={0}>
+        <Flex gap={2} mb={4} wrap="wrap">
           <StatCard label="Totale Processi" value={stats.total} color="#1d1d1f" />
           <StatCard label="Da Valutare" value={stats.toValuate} color="#86868b" />
           <StatCard label="In Analisi" value={stats.analysis} color="#007aff" />
@@ -229,21 +227,21 @@ export default function HomeView() {
         </Flex>
       )}
 
-      <Flex gap={3} mb={3} flex={1} minH={0}>
-        <Box {...CARD_STYLE} flex={1} display="flex" flexDirection="column" minH={0}>
-          <Text fontSize="14px" fontWeight="600" color="#1d1d1f" mb={2} flexShrink={0}>
+      <Flex gap={3} mb={4}>
+        <Box {...CARD_STYLE} flex={1} display="flex" flexDirection="column" h={`${ROW_HEIGHT}px`}>
+          <Text fontSize="14px" fontWeight="600" color="#1d1d1f" mb={2}>
             Distribuzione per Stato
           </Text>
-          <Box flex={1} minH={0}>
+          <Box flex={1}>
             {stats && <StatusChart stats={stats} />}
           </Box>
         </Box>
 
-        <Box {...CARD_STYLE} flex={1.5} display="flex" flexDirection="column" minH={0}>
-          <Text fontSize="14px" fontWeight="600" color="#1d1d1f" mb={2} flexShrink={0}>
+        <Box {...CARD_STYLE} flex={1.5} display="flex" flexDirection="column" h={`${ROW_HEIGHT}px`}>
+          <Text fontSize="14px" fontWeight="600" color="#1d1d1f" mb={2}>
             Ultimi Processi
           </Text>
-          <Box flex={1} overflowY="auto" minH={0}>
+          <Box flex={1} overflowY="auto">
             {recentProcesses?.data && recentProcesses.data.length > 0 ? (
               <Flex direction="column" gap={0}>
                 {recentProcesses.data.map((p, i) => (
@@ -308,22 +306,23 @@ export default function HomeView() {
       </Flex>
 
       {/* Orchestrator Section */}
-      {hasOrchestrator && (
+      {orchStats && orchStats.totalJobs > 0 && (
         <>
-          <Flex gap={2} mb={3} flexShrink={0} align="center">
-            <Text fontSize="16px" fontWeight="700" color="#1d1d1f" mr={2}>Orchestrator</Text>
-            <StatCard label="Esecuzioni" value={orchStats.totalJobs} color="#1d1d1f" />
+          <Text fontSize="18px" fontWeight="700" color="#1d1d1f" mb={3}>Orchestrator</Text>
+
+          <Flex gap={2} mb={4} wrap="wrap">
+            <StatCard label="Esecuzioni Totali" value={orchStats.totalJobs} color="#1d1d1f" />
             <StatCard label="Completate" value={orchStats.successful} color="#34c759" />
             <StatCard label="Errori" value={orchStats.faulted} color="#ff3b30" />
             <StatCard label="In Esecuzione" value={orchStats.running} color="#007aff" />
           </Flex>
 
-          <Flex gap={3} flex={1} minH={0}>
-            <Box {...CARD_STYLE} flex={1} display="flex" flexDirection="column" minH={0}>
-              <Text fontSize="14px" fontWeight="600" color="#1d1d1f" mb={2} flexShrink={0}>
+          <Flex gap={3}>
+            <Box {...CARD_STYLE} flex={1} display="flex" flexDirection="column" h={`${ROW_HEIGHT}px`}>
+              <Text fontSize="14px" fontWeight="600" color="#1d1d1f" mb={2}>
                 Esecuzioni Bot
               </Text>
-              <Box flex={1} minH={0}>
+              <Box flex={1}>
                 <BotExecutionsPieChart
                   successful={orchStats.successful}
                   faulted={orchStats.faulted}
@@ -332,17 +331,17 @@ export default function HomeView() {
               </Box>
             </Box>
 
-            <Box {...CARD_STYLE} flex={1.5} display="flex" flexDirection="column" minH={0}>
-              <Text fontSize="14px" fontWeight="600" color="#1d1d1f" mb={2} flexShrink={0}>
+            <Box {...CARD_STYLE} flex={1.5} display="flex" flexDirection="column" h={`${ROW_HEIGHT}px`}>
+              <Text fontSize="14px" fontWeight="600" color="#1d1d1f" mb={2}>
                 Ultime Esecuzioni
               </Text>
-              <Box flex={1} overflow="hidden" minH={0}>
+              <Box flex={1} overflow="hidden">
                 <RecentJobsTable jobs={orchStats.recentJobs} />
               </Box>
             </Box>
           </Flex>
         </>
       )}
-    </Flex>
+    </Box>
   )
 }
