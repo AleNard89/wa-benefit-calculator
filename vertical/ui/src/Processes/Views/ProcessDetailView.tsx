@@ -9,9 +9,6 @@ import { selectAccessToken } from '@/Auth/Redux'
 
 import Config from '@/Config'
 import { toaster } from '@/Snippets/toaster'
-import BenefitsBarChart from '../Components/Charts/BenefitsBarChart'
-import EvaluationRadarChart from '../Components/Charts/EvaluationRadarChart'
-import ImpactPieChart from '../Components/Charts/ImpactPieChart'
 import ProcessResults from '../Components/ProcessResults'
 import GeneralInfoTab from '../Components/ProcessForm/GeneralInfoTab'
 import CostsTab from '../Components/ProcessForm/CostsTab'
@@ -367,19 +364,7 @@ export default function ProcessDetailView() {
             </Box>
           )}
 
-          <ProcessResults result={result} />
-
-          <Flex gap={4} wrap="wrap">
-            <Box flex={1} minW="300px">
-              <BenefitsBarChart result={result} />
-            </Box>
-            <Box flex={1} minW="300px">
-              <EvaluationRadarChart scores={scores} />
-            </Box>
-            <Box flex={1} minW="300px">
-              <ImpactPieChart scores={scores} />
-            </Box>
-          </Flex>
+          <ProcessResults result={result} scores={scores} />
         </>
       )}
     </Flex>
