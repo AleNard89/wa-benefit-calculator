@@ -28,12 +28,14 @@ const kpiExplanations: Record<string, string> = {
   'Impact Score': 'Media dei 6 punteggi di valutazione impatto (Qualita Dati, Audit, Customer Experience, Riduzione Errori, Standardizzazione, Scalabilita). Scala 1-5.',
 }
 
+const SECTION_HEIGHT = 260
+
 function KpiItem({ label, value, accent }: { label: string; value: string; accent?: string }) {
   const [showInfo, setShowInfo] = useState(false)
   const explanation = kpiExplanations[label]
 
   return (
-    <Box py={2.5} px={3} borderRadius="10px" bg="white" boxShadow="0 1px 4px rgba(0,0,0,0.06)" flex={1} minW="140px" position="relative">
+    <Box py={2.5} px={3} borderRadius="10px" bg="white" boxShadow="0 1px 4px rgba(0,0,0,0.06)" position="relative">
       <Flex justify="space-between" align="center" mb={0.5}>
         <Text fontSize="11px" color="#86868b">{label}</Text>
         {explanation && (
@@ -89,35 +91,46 @@ export default function ProcessResults({ result, scores }: Props) {
     <Flex direction="column" gap={3}>
       <Text fontWeight="700" fontSize="17px" color="#1d1d1f">Risultati Calcolo</Text>
 
-      <Flex gap={4}>
-        <Flex direction="column" gap={2} flex={1}>
-          <Flex gap={2}>
-            <KpiItem label="ROI" value={formatPercent(result.roi)} accent={result.roi >= 0 ? '#34c759' : '#ff3b30'} />
-            <KpiItem label="Risparmio Annuale" value={formatCurrency(result.annualSavings)} accent="#007aff" />
-            <KpiItem label="Break-even" value={result.breakEvenMonths != null ? `${result.breakEvenMonths} mesi` : 'N/A'} />
-          </Flex>
-          <Flex gap={2}>
-            <KpiItem label="Ore Risparmiate / Anno" value={formatNumber(result.hoursSavedAnnually)} />
-            <KpiItem label="Risparmio Operativo" value={formatCurrency(result.operationalSavings)} />
-            <KpiItem label="Riduzione Errori" value={formatCurrency(result.errorReductionSavings)} />
-          </Flex>
-          <Flex gap={2}>
-            <KpiItem label="Beneficio Produttivita" value={formatCurrency(result.productivityBenefit)} />
-            <KpiItem label="Impact Score" value={`${formatNumber(result.impactScore)} / 5`} accent="#ff9500" />
-          </Flex>
-        </Flex>
+      <Flex gap={3} h={`${SECTION_HEIGHT}px`}>
+        <Box
+          flex={1}
+          display="grid"
+          gridTemplateColumns="repeat(4, 1fr)"
+          gridTemplateRows="repeat(2, 1fr)"
+          gap={2}
+        >
+          <KpiItem label="ROI" value={formatPercent(result.roi)} accent={result.roi >= 0 ? '#34c759' : '#ff3b30'} />
+          <KpiItem label="Risparmio Annuale" value={formatCurrency(result.annualSavings)} accent="#007aff" />
+          <KpiItem label="Break-even" value={result.breakEvenMonths != null ? `${result.breakEvenMonths} mesi` : 'N/A'} />
+          <KpiItem label="Ore Risp. / Anno" value={formatNumber(result.hoursSavedAnnually)} />
+          <KpiItem label="Risparmio Operativo" value={formatCurrency(result.operationalSavings)} />
+          <KpiItem label="Riduzione Errori" value={formatCurrency(result.errorReductionSavings)} />
+          <KpiItem label="Beneficio Produttivita" value={formatCurrency(result.productivityBenefit)} />
+          <KpiItem label="Impact Score" value={`${formatNumber(result.impactScore)} / 5`} accent="#ff9500" />
+        </Box>
 
-        <Box w="320px" flexShrink={0} bg="white" borderRadius="12px" boxShadow="0 1px 4px rgba(0,0,0,0.06)" p={4}>
-          <Text fontSize="13px" fontWeight="600" color="#1d1d1f" mb={2}>Valutazione Impatto</Text>
-          <ResponsiveContainer width="100%" height={220}>
-            <RadarChart data={radarData}>
-              <PolarGrid stroke="#e0e0e0" />
-              <PolarAngleAxis dataKey="subject" tick={{ fill: '#86868b', fontSize: 11 }} />
-              <PolarRadiusAxis angle={30} domain={[0, 5]} tick={{ fill: '#aaa', fontSize: 10 }} />
-              <Radar dataKey="value" stroke="#34c759" fill="#34c759" fillOpacity={0.25} />
-              <Tooltip />
-            </RadarChart>
-          </ResponsiveContainer>
+        <Box
+          w="280px"
+          flexShrink={0}
+          bg="white"
+          borderRadius="12px"
+          boxShadow="0 1px 4px rgba(0,0,0,0.06)"
+          p={4}
+          display="flex"
+          flexDirection="column"
+        >
+          <Text fontSize="13px" fontWeight="600" color="#1d1d1f" mb={1} flexShrink={0}>Valutazione Impatto</Text>
+          <Box flex={1}>
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={radarData}>
+                <PolarGrid stroke="#e0e0e0" />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: '#86868b', fontSize: 11 }} />
+                <PolarRadiusAxis angle={30} domain={[0, 5]} tick={{ fill: '#aaa', fontSize: 10 }} />
+                <Radar dataKey="value" stroke="#34c759" fill="#34c759" fillOpacity={0.25} />
+                <Tooltip />
+              </RadarChart>
+            </ResponsiveContainer>
+          </Box>
         </Box>
       </Flex>
     </Flex>
