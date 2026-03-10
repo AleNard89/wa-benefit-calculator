@@ -61,6 +61,9 @@ type ProcessData struct {
 	TimePerActivity         int     `json:"timePerActivity"`
 	ActivitiesPerDay        int     `json:"activitiesPerDay"`
 	WorkingDaysPerYear      int     `json:"workingDaysPerYear"`
+	HoursPerDay             float64 `json:"hoursPerDay,omitempty"`
+	DaysPerWeek             int     `json:"daysPerWeek,omitempty"`
+	WeeksPerYear            int     `json:"weeksPerYear,omitempty"`
 	CurrentErrorRate        float64 `json:"currentErrorRate"`
 	PostErrorRate           float64 `json:"postErrorRate"`
 	ErrorCost               float64 `json:"errorCost"`
@@ -138,6 +141,9 @@ func (p *Process) ApplyPayload(payload ProcessBody) error {
 		TimePerActivity:         payload.TimePerActivity,
 		ActivitiesPerDay:        payload.ActivitiesPerDay,
 		WorkingDaysPerYear:      payload.WorkingDaysPerYear,
+		HoursPerDay:             payload.HoursPerDay,
+		DaysPerWeek:             payload.DaysPerWeek,
+		WeeksPerYear:            payload.WeeksPerYear,
 		CurrentErrorRate:        payload.CurrentErrorRate,
 		PostErrorRate:           payload.PostErrorRate,
 		ErrorCost:               payload.ErrorCost,

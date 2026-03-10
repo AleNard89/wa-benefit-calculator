@@ -21,6 +21,9 @@ export interface ProcessData {
   timePerActivity: number
   activitiesPerDay: number
   workingDaysPerYear: number
+  hoursPerDay?: number
+  daysPerWeek?: number
+  weeksPerYear?: number
   currentErrorRate: number
   postErrorRate: number
   errorCost: number
@@ -84,6 +87,9 @@ export interface ProcessInput {
   timePerActivity: number
   activitiesPerDay: number
   workingDaysPerYear: number
+  hoursPerDay: number
+  daysPerWeek: number
+  weeksPerYear: number
   currentErrorRate: number
   postErrorRate: number
   errorCost: number

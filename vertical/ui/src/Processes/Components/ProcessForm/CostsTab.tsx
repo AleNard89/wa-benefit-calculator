@@ -1,4 +1,5 @@
 import { Box, Flex, Input, Text } from '@chakra-ui/react'
+import { useEffect } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProcessFormValues } from '../../Forms/ProcessFormSchema'
 
@@ -26,7 +27,23 @@ function Field({ label, error, children }: { label: string; error?: string; chil
 }
 
 export default function CostsTab({ form }: Props) {
-  const { register, formState: { errors } } = form
+  const { register, watch, setValue, formState: { errors } } = form
+
+  const hoursPerDay = watch('hoursPerDay')
+  const daysPerWeek = watch('daysPerWeek')
+  const weeksPerYear = watch('weeksPerYear')
+
+  useEffect(() => {
+    const h = hoursPerDay || 0
+    const d = daysPerWeek || 0
+    const w = weeksPerYear || 0
+    setValue('timePerActivity', Math.round(h * 60))
+    setValue('activitiesPerDay', 1)
+    setValue('workingDaysPerYear', d * w)
+  }, [hoursPerDay, daysPerWeek, weeksPerYear, setValue])
+
+  const totalDays = (daysPerWeek || 0) * (weeksPerYear || 0)
+  const totalHoursYear = (hoursPerDay || 0) * totalDays
 
   return (
     <Flex direction="column" gap={5}>
@@ -54,18 +71,30 @@ export default function CostsTab({ form }: Props) {
             <Field label="Costo Orario Personale (EUR/h) *" error={errors.hourlyCost?.message}>
               <Input type="number" step="0.01" {...register('hourlyCost', { valueAsNumber: true })} {...inputStyle} />
             </Field>
-            <Field label="Tempo per Attivita (min) *" error={errors.timePerActivity?.message}>
-              <Input type="number" {...register('timePerActivity', { valueAsNumber: true })} min={1} {...inputStyle} />
+            <Field label="Ore al Giorno dedicate *" error={errors.hoursPerDay?.message}>
+              <Input type="number" step="0.5" {...register('hoursPerDay', { valueAsNumber: true })} min={0} max={24} {...inputStyle} />
             </Field>
           </Flex>
           <Flex gap={4}>
-            <Field label="Attivita al Giorno *" error={errors.activitiesPerDay?.message}>
-              <Input type="number" {...register('activitiesPerDay', { valueAsNumber: true })} min={1} {...inputStyle} />
+            <Field label="Giorni alla Settimana *" error={errors.daysPerWeek?.message}>
+              <Input type="number" {...register('daysPerWeek', { valueAsNumber: true })} min={1} max={7} {...inputStyle} />
             </Field>
-            <Field label="Giorni Lavorativi / Anno *" error={errors.workingDaysPerYear?.message}>
-              <Input type="number" {...register('workingDaysPerYear', { valueAsNumber: true })} min={1} {...inputStyle} />
+            <Field label="Settimane all'Anno *" error={errors.weeksPerYear?.message}>
+              <Input type="number" {...register('weeksPerYear', { valueAsNumber: true })} min={1} max={52} {...inputStyle} />
             </Field>
           </Flex>
+          {totalHoursYear > 0 && (
+            <Flex gap={4} bg="#f5f5f7" borderRadius="10px" px={4} py={2.5}>
+              <Box flex={1}>
+                <Text fontSize="11px" color="#86868b">Giorni lavorativi / anno</Text>
+                <Text fontSize="14px" fontWeight="600" color="#1d1d1f">{totalDays}</Text>
+              </Box>
+              <Box flex={1}>
+                <Text fontSize="11px" color="#86868b">Ore totali / anno</Text>
+                <Text fontSize="14px" fontWeight="600" color="#007aff">{Math.round(totalHoursYear)}</Text>
+              </Box>
+            </Flex>
+          )}
         </Flex>
       </Box>
     </Flex>

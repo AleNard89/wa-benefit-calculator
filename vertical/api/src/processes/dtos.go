@@ -33,6 +33,9 @@ type ProcessBody struct {
 	TimePerActivity    int     `json:"timePerActivity"`
 	ActivitiesPerDay   int     `json:"activitiesPerDay"`
 	WorkingDaysPerYear int     `json:"workingDaysPerYear"`
+	HoursPerDay        float64 `json:"hoursPerDay"`
+	DaysPerWeek        int     `json:"daysPerWeek"`
+	WeeksPerYear       int     `json:"weeksPerYear"`
 
 	CurrentErrorRate float64 `json:"currentErrorRate"`
 	PostErrorRate    float64 `json:"postErrorRate"`
