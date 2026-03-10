@@ -17,6 +17,7 @@ export interface ProcessData {
   implementationCost: number
   trainingCost: number
   maintenanceCost: number
+  annualSalary?: number
   hourlyCost: number
   timePerActivity: number
   activitiesPerDay: number
@@ -83,6 +84,7 @@ export interface ProcessInput {
   implementationCost: number
   trainingCost: number
   maintenanceCost: number
+  annualSalary: number
   hourlyCost: number
   timePerActivity: number
   activitiesPerDay: number

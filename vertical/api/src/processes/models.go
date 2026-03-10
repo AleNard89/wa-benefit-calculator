@@ -57,6 +57,7 @@ type ProcessData struct {
 	ImplementationCost      float64 `json:"implementationCost"`
 	TrainingCost            float64 `json:"trainingCost"`
 	MaintenanceCost         float64 `json:"maintenanceCost"`
+	AnnualSalary            float64 `json:"annualSalary,omitempty"`
 	HourlyCost              float64 `json:"hourlyCost"`
 	TimePerActivity         int     `json:"timePerActivity"`
 	ActivitiesPerDay        int     `json:"activitiesPerDay"`
@@ -137,6 +138,7 @@ func (p *Process) ApplyPayload(payload ProcessBody) error {
 		ImplementationCost:      payload.ImplementationCost,
 		TrainingCost:            payload.TrainingCost,
 		MaintenanceCost:         payload.MaintenanceCost,
+		AnnualSalary:            payload.AnnualSalary,
 		HourlyCost:              payload.HourlyCost,
 		TimePerActivity:         payload.TimePerActivity,
 		ActivitiesPerDay:        payload.ActivitiesPerDay,

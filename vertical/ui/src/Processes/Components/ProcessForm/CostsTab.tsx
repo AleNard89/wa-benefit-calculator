@@ -123,10 +123,17 @@ export default function CostsTab({ form }: Props) {
   const { register, watch, setValue, formState: { errors } } = form
 
   const periodicity = watch('periodicity')
+  const annualSalary = watch('annualSalary')
   const hoursPerDay = watch('hoursPerDay')
   const daysPerWeek = watch('daysPerWeek')
   const weeksPerYear = watch('weeksPerYear')
   const activitiesPerDay = watch('activitiesPerDay')
+
+  // Auto-compute hourly cost from RAL (1720 ore/anno standard italiano)
+  useEffect(() => {
+    const ral = annualSalary || 0
+    setValue('hourlyCost', ral > 0 ? Math.round((ral / 1720) * 100) / 100 : 0)
+  }, [annualSalary, setValue])
 
   // Set defaults when periodicity changes
   useEffect(() => {
@@ -184,9 +191,19 @@ export default function CostsTab({ form }: Props) {
         </Flex>
 
         <Flex direction="column" gap={4}>
-          <Field label="Costo Orario Personale (EUR/h) *" error={errors.hourlyCost?.message}>
-            <Input type="number" step="0.01" {...register('hourlyCost', { valueAsNumber: true })} {...inputStyle} />
-          </Field>
+          <Flex gap={4} align="end">
+            <Field label="RAL Media Dipendente (EUR) *" error={errors.annualSalary?.message}>
+              <Input type="number" step="100" {...register('annualSalary', { valueAsNumber: true })} placeholder="es. 30000" {...inputStyle} />
+            </Field>
+            {(annualSalary || 0) > 0 && (
+              <Box pb={1}>
+                <Text fontSize="11px" color="#86868b">Costo orario calcolato</Text>
+                <Text fontSize="16px" fontWeight="700" color="#007aff">
+                  {(Math.round(((annualSalary || 0) / 1720) * 100) / 100).toFixed(2)} EUR/h
+                </Text>
+              </Box>
+            )}
+          </Flex>
 
           <PeriodicityFields form={form} periodicity={periodicity} />
 

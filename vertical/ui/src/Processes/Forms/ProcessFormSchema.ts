@@ -22,6 +22,7 @@ export const processFormSchema = z.object({
   trainingCost: z.number().min(0),
   maintenanceCost: z.number().min(0),
 
+  annualSalary: z.number().min(0),
   hourlyCost: z.number().min(0),
   timePerActivity: z.number().min(0),
   activitiesPerDay: z.number().min(0),
@@ -66,6 +67,7 @@ export const processFormDefaults: ProcessFormValues = {
   implementationCost: 0,
   trainingCost: 0,
   maintenanceCost: 0,
+  annualSalary: 0,
   hourlyCost: 0,
   timePerActivity: 0,
   activitiesPerDay: 1,

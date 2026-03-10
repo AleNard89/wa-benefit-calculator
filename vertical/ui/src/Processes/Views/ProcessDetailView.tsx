@@ -75,6 +75,7 @@ export default function ProcessDetailView() {
       implementationCost: d?.implementationCost ?? 0,
       trainingCost: d?.trainingCost ?? 0,
       maintenanceCost: d?.maintenanceCost ?? 0,
+      annualSalary: d?.annualSalary ?? (d?.hourlyCost ? Math.round(d.hourlyCost * 1720) : 0),
       hourlyCost: d?.hourlyCost ?? 0,
       timePerActivity: d?.timePerActivity ?? 0,
       activitiesPerDay: d?.activitiesPerDay ?? 0,
