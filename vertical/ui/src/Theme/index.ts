@@ -57,6 +57,10 @@ const config = defineConfig({
       '0%, 100%': { opacity: 1 },
       '50%': { opacity: 0 },
     },
+    '@keyframes typingBounce': {
+      '0%, 60%, 100%': { transform: 'translateY(0)' },
+      '30%': { transform: 'translateY(-8px)' },
+    },
   },
   theme: {
     tokens,

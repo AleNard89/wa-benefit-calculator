@@ -48,6 +48,27 @@ function MessageBubble({ message }: { message: Message }) {
   )
 }
 
+function TypingIndicator() {
+  return (
+    <Flex justify="flex-start" mb={3}>
+      <Box px={4} py={3} borderRadius="16px 16px 16px 4px" bg="#f5f5f7">
+        <Flex gap="4px" align="center" h="20px">
+          {[0, 1, 2].map((i) => (
+            <Box
+              key={i}
+              w="8px"
+              h="8px"
+              borderRadius="50%"
+              bg="#86868b"
+              animation={`typingBounce 1.4s ease-in-out ${i * 0.2}s infinite`}
+            />
+          ))}
+        </Flex>
+      </Box>
+    </Flex>
+  )
+}
+
 function StreamingBubble({ content }: { content: string }) {
   if (!content) return null
   return (
@@ -289,6 +310,7 @@ export default function ChatView() {
               {messages?.map((msg) => (
                 <MessageBubble key={msg.id} message={msg} />
               ))}
+              {streaming && !streamContent && <TypingIndicator />}
               {streaming && <StreamingBubble content={streamContent} />}
               <div ref={messagesEndRef} />
             </Flex>
