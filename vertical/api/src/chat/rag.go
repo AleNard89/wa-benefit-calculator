@@ -2,6 +2,7 @@ package chat
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -25,7 +26,14 @@ IMPORTANTE: Ogni proposta (processo) può avere un campo linked_bots con i nomi 
 3. **Documenti** (file PDF, PowerPoint e Word) caricati dall'azienda per ogni processo.
 
 Quando citi dati, indica i numeri esatti. Quando citi documenti, menziona il nome del file.
-Se non hai informazioni sufficienti per rispondere, dillo chiaramente.`
+Se non hai informazioni sufficienti per rispondere, dillo chiaramente.
+
+FORMATTAZIONE: Puoi usare Markdown nella risposta. Quando l'utente chiede dati in formato tabellare, lista, o tabella, usa SEMPRE tabelle Markdown con intestazioni e separatori (es: | Col1 | Col2 |\n|------|------|\n| val | val |). Il frontend supporta il rendering Markdown completo incluse tabelle, grassetto, corsivo, elenchi.
+
+PROCESSI E SCHEDULAZIONI: Quando l'utente chiede la lista dei processi con schedulazione, per OGNI processo nel contesto controlla:
+1. Il campo "Periodicita prevista" (schedulazione configurata dall'utente)
+2. Il campo "Schedulazioni Orchestrator" (schedulazioni reali dall'Orchestrator UiPath con cron/frequenza)
+Includi TUTTI i processi, nessuno escluso. I bot collegati (linked_bots) NON sono processi separati, sono componenti del processo padre.`
 
 const dbSchemaPrompt = `Schema del database disponibile:
 - processes: id, process_name, status ('To Valuate','Analysis','Ongoing','Production'), created_at, data (JSONB con: area, proposer, responsible_manager, department, process_type, periodicity, technology, systems_involved, implementation_cost, training_cost, maintenance_cost, hourly_cost, time_per_activity, activities_per_day, working_days_per_year, current_error_rate, post_error_rate, error_cost, productivity_factor, time_reduction_factor, data_quality_score, audit_score, customer_experience_score, error_reduction_score, standardization_score, scalability_score, linked_bots), results (JSONB con: operational_savings, error_reduction_savings, productivity_benefit, annual_savings, roi, break_even_months, hours_saved_monthly, hours_saved_annually, impact_score). NOTA: linked_bots e un array di nomi bot Orchestrator collegati a questo processo.
@@ -87,6 +95,7 @@ func queryProcessData(companyID int) string {
 		Area        string  `db:"area"`
 		Technology  string  `db:"technology"`
 		Description string  `db:"description"`
+		Periodicity string  `db:"periodicity"`
 		LinkedBots  string  `db:"linked_bots"`
 		BotNotes    string  `db:"bot_notes"`
 		ROI         float64 `db:"roi"`
@@ -99,6 +108,7 @@ func queryProcessData(companyID int) string {
 		COALESCE(data->>'area', '') as area,
 		COALESCE(data->>'technology', '') as technology,
 		COALESCE(data->>'processDescription', '') as description,
+		COALESCE(data->>'periodicity', '') as periodicity,
 		COALESCE(data->>'linkedBots', '') as linked_bots,
 		COALESCE(data->>'botNotes', '') as bot_notes,
 		COALESCE((results->>'roi')::numeric, 0) as roi,
@@ -115,10 +125,13 @@ func queryProcessData(companyID int) string {
 	}
 	defer rows.Close()
 
+	// Collect schedules to cross-reference with processes
+	schedMap := queryScheduleMap(companyID)
+
 	var lines []string
 	for rows.Next() {
 		var p ProcessSummary
-		if err := rows.Scan(&p.ProcessName, &p.Status, &p.Area, &p.Technology, &p.Description, &p.LinkedBots, &p.BotNotes, &p.ROI, &p.Savings); err != nil {
+		if err := rows.Scan(&p.ProcessName, &p.Status, &p.Area, &p.Technology, &p.Description, &p.Periodicity, &p.LinkedBots, &p.BotNotes, &p.ROI, &p.Savings); err != nil {
 			continue
 		}
 		line := fmt.Sprintf("- %s | Area: %s | Stato: %s | Tecnologia: %s | ROI: %.1f%% | Risparmio: €%.0f/anno",
@@ -126,8 +139,16 @@ func queryProcessData(companyID int) string {
 		if p.Description != "" {
 			line += fmt.Sprintf("\n  Descrizione: %s", p.Description)
 		}
+		if p.Periodicity != "" {
+			line += fmt.Sprintf("\n  Periodicita prevista: %s", p.Periodicity)
+		}
 		if p.LinkedBots != "" && p.LinkedBots != "null" && p.LinkedBots != "[]" {
 			line += fmt.Sprintf("\n  Bot collegati: %s", p.LinkedBots)
+			// Cross-reference: find schedules for each linked bot
+			botSchedules := matchBotSchedules(p.LinkedBots, schedMap)
+			if botSchedules != "" {
+				line += fmt.Sprintf("\n  Schedulazioni Orchestrator: %s", botSchedules)
+			}
 		}
 		if p.BotNotes != "" {
 			line += fmt.Sprintf("\n  Ruolo bot: %s", p.BotNotes)
@@ -139,6 +160,86 @@ func queryProcessData(companyID int) string {
 		return "Nessun processo trovato per questa azienda."
 	}
 	return fmt.Sprintf("Processi aziendali (%d):\n%s", len(lines), strings.Join(lines, "\n"))
+}
+
+type scheduleInfo struct {
+	Name        string
+	ReleaseName string
+	Enabled     bool
+	CronSummary string
+	NextOcc     string
+}
+
+func queryScheduleMap(companyID int) map[string][]scheduleInfo {
+	database := db.DB()
+	ctx := context.Background()
+	result := make(map[string][]scheduleInfo)
+
+	rows, err := database.C.Query(ctx, `SELECT name, COALESCE(release_name, ''), enabled, 
+		COALESCE(cron_summary, COALESCE(cron_expression, '')), 
+		COALESCE(TO_CHAR(next_occurrence, 'YYYY-MM-DD HH24:MI:SS'), '')
+		FROM orchestrator_schedules WHERE company_id = $1`, companyID)
+	if err != nil {
+		return result
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var s scheduleInfo
+		if err := rows.Scan(&s.Name, &s.ReleaseName, &s.Enabled, &s.CronSummary, &s.NextOcc); err != nil {
+			continue
+		}
+		key := strings.ToLower(s.ReleaseName)
+		result[key] = append(result[key], s)
+	}
+	return result
+}
+
+func matchBotSchedules(linkedBotsJSON string, schedMap map[string][]scheduleInfo) string {
+	linkedBotsJSON = strings.TrimSpace(linkedBotsJSON)
+	if linkedBotsJSON == "" || linkedBotsJSON == "null" || linkedBotsJSON == "[]" {
+		return ""
+	}
+
+	var botNames []string
+	if strings.HasPrefix(linkedBotsJSON, "[") {
+		if err := json.Unmarshal([]byte(linkedBotsJSON), &botNames); err != nil {
+			return ""
+		}
+	} else {
+		botNames = []string{linkedBotsJSON}
+	}
+
+	var matched []string
+	seen := make(map[string]bool)
+	for _, bot := range botNames {
+		botLower := strings.ToLower(strings.TrimSpace(bot))
+		for key, schedules := range schedMap {
+			if strings.Contains(key, botLower) || strings.Contains(botLower, key) || key == botLower {
+				for _, s := range schedules {
+					label := s.Name
+					if seen[label] {
+						continue
+					}
+					seen[label] = true
+					stato := "attivo"
+					if !s.Enabled {
+						stato = "disattivato"
+					}
+					entry := fmt.Sprintf("%s (%s, %s", label, stato, s.CronSummary)
+					if s.NextOcc != "" {
+						entry += fmt.Sprintf(", prossima: %s", s.NextOcc)
+					}
+					entry += ")"
+					matched = append(matched, entry)
+				}
+			}
+		}
+	}
+	if len(matched) == 0 {
+		return ""
+	}
+	return strings.Join(matched, "; ")
 }
 
 func queryOrchestratorData(companyID int) string {

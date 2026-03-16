@@ -1,5 +1,7 @@
 import { Box, Button, Flex, Input, Text } from '@chakra-ui/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { LuMessageCircle, LuPlus, LuSend, LuTrash2 } from 'react-icons/lu'
 
 import Config from '@/Config'
@@ -31,7 +33,13 @@ function MessageBubble({ message }: { message: Message }) {
         bg={isUser ? '#007aff' : '#f5f5f7'}
         color={isUser ? 'white' : '#1d1d1f'}
       >
-        <Text fontSize="14px" lineHeight="1.5" whiteSpace="pre-wrap">{message.content}</Text>
+        {isUser ? (
+          <Text fontSize="14px" lineHeight="1.5" whiteSpace="pre-wrap">{message.content}</Text>
+        ) : (
+          <Box className="chat-markdown" fontSize="14px" lineHeight="1.5">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+          </Box>
+        )}
         <Text fontSize="10px" color={isUser ? 'whiteAlpha.700' : '#86868b'} mt={1} textAlign="right">
           {formatTime(message.createdAt)}
         </Text>
@@ -45,7 +53,10 @@ function StreamingBubble({ content }: { content: string }) {
   return (
     <Flex justify="flex-start" mb={3}>
       <Box maxW="75%" px={4} py={2.5} borderRadius="16px 16px 16px 4px" bg="#f5f5f7" color="#1d1d1f">
-        <Text fontSize="14px" lineHeight="1.5" whiteSpace="pre-wrap">{content}<Box as="span" display="inline-block" w="6px" h="14px" bg="#007aff" borderRadius="1px" ml={0.5} animation="blink 1s infinite" /></Text>
+        <Box className="chat-markdown" fontSize="14px" lineHeight="1.5">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+          <Box as="span" display="inline-block" w="6px" h="14px" bg="#007aff" borderRadius="1px" ml={0.5} animation="blink 1s infinite" />
+        </Box>
       </Box>
     </Flex>
   )
