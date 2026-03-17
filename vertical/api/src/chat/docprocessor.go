@@ -2,12 +2,14 @@ package chat
 
 import (
 	"archive/zip"
+	"bytes"
 	"encoding/xml"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	gopdf "github.com/ledongthuc/pdf"
 	"go.uber.org/zap"
 )
 
@@ -145,6 +147,36 @@ func ExtractTextFromDOCX(filePath string) (string, error) {
 	return "", fmt.Errorf("word/document.xml not found in docx")
 }
 
+// PDF text extraction
+
+func ExtractTextFromPDF(filePath string) (string, error) {
+	f, r, err := gopdf.Open(filePath)
+	if err != nil {
+		return "", fmt.Errorf("cannot open pdf: %w", err)
+	}
+	defer f.Close()
+
+	var buf bytes.Buffer
+	for i := 1; i <= r.NumPage(); i++ {
+		p := r.Page(i)
+		if p.V.IsNull() {
+			continue
+		}
+		text, err := p.GetPlainText(nil)
+		if err != nil {
+			continue
+		}
+		trimmed := strings.TrimSpace(text)
+		if trimmed != "" {
+			if buf.Len() > 0 {
+				buf.WriteString("\n\n")
+			}
+			buf.WriteString(trimmed)
+		}
+	}
+	return buf.String(), nil
+}
+
 // Chunking
 
 func ChunkText(text string, maxChars int, overlap int) []string {
@@ -194,6 +226,12 @@ func IndexFile(azure *AzureClient, companyID int, filePath string) error {
 		text, err := ExtractTextFromDOCX(filePath)
 		if err != nil {
 			return fmt.Errorf("error extracting docx: %w", err)
+		}
+		allText = text
+	case ".pdf":
+		text, err := ExtractTextFromPDF(filePath)
+		if err != nil {
+			return fmt.Errorf("error extracting pdf: %w", err)
 		}
 		allText = text
 	default:
