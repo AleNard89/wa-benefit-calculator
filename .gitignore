@@ -21,6 +21,11 @@ venv/
 SESSION_SUMMARY.md
 MIGRATION_PLAN.md
 
+# Presentations / screenshots
+BenefitCalculator_Presentation.html
+orbita-presentation/
+screenshot_presentazione/
+
 # Webapp
 vertical/ui/node_modules/
 vertical/ui/dist/
