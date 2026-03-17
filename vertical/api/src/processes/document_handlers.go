@@ -86,26 +86,8 @@ func uploadDocument(c *gin.Context) {
 	zap.S().Infow("Documento caricato", "process_id", id, "file", file.Filename)
 	c.JSON(http.StatusOK, process)
 
-	// Index for RAG asynchronously after response is sent
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				zap.S().Errorw("Panic during document indexing", "error", r)
-			}
-		}()
-		// Small delay to let the upload memory be freed
-		time.Sleep(2 * time.Second)
-		azureClient := chat.GetAzureClient()
-		if azureClient == nil || !azureClient.IsConfigured() {
-			return
-		}
-		zap.S().Infow("Avvio indicizzazione documento", "process_id", id, "file", file.Filename)
-		if err := chat.IndexFile(azureClient, companyID, destPath); err != nil {
-			zap.S().Warnw("Errore indicizzazione documento", "error", err)
-		} else {
-			zap.S().Infow("Indicizzazione completata", "process_id", id)
-		}
-	}()
+	// Index for RAG asynchronously (serialized via worker queue)
+	chat.EnqueueIndexing(companyID, destPath, file.Filename, id)
 }
 
 var UploadDocument = d.CompanyRequiredAndPermissionRequired([]string{ProcessUpdate}, uploadDocument)

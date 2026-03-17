@@ -46,8 +46,8 @@ services:
     env_file:
       - .env.dev.local
     environment:
-      - GOGC=50
       - TLS_SKIP_VERIFY=true
+
     volumes:
       - ./vertical/api/src:/go/app/
       - ./logs:/go/logs/

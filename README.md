@@ -70,7 +70,7 @@ cp .env.example .env.dev.local
 ```
 
 Open http://localhost:5174 and log in:
-- **Email:** `admin@example.com`
+- **Email:** `admin@it.ey.com`
 - **Password:** `Admin123!`
 
 ### Commands

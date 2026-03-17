@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"encoding/xml"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,26 +11,79 @@ import (
 	"go.uber.org/zap"
 )
 
-// PPTX text extraction
+// PPTX streaming text extraction
+// Uses xml.Decoder to read token-by-token, extracting only <a:t> text elements.
+// Never loads the full slide XML into memory — safe for slides with large embedded images.
 
-type pptxSlideBody struct {
-	XMLName xml.Name `xml:"sld"`
-	CSld    struct {
-		SpTree struct {
-			Shapes []pptxShape `xml:"sp"`
-		} `xml:"spTree"`
-	} `xml:"cSld"`
+func ExtractTextFromPPTX(filePath string) ([]string, error) {
+	r, err := zip.OpenReader(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open pptx: %w", err)
+	}
+	defer r.Close()
+
+	var slideTexts []string
+
+	for i := 1; i <= 200; i++ {
+		slideName := fmt.Sprintf("ppt/slides/slide%d.xml", i)
+		text, found := streamSlideText(r, slideName)
+		if !found {
+			break
+		}
+		if text != "" {
+			slideTexts = append(slideTexts, text)
+		}
+	}
+
+	return slideTexts, nil
 }
 
-type pptxShape struct {
-	TxBody struct {
-		Paragraphs []struct {
-			Runs []struct {
-				Text string `xml:"t"`
-			} `xml:"r"`
-		} `xml:"p"`
-	} `xml:"txBody"`
+func streamSlideText(r *zip.ReadCloser, slideName string) (string, bool) {
+	for _, f := range r.File {
+		if f.Name != slideName {
+			continue
+		}
+		rc, err := f.Open()
+		if err != nil {
+			return "", true
+		}
+		defer rc.Close()
+
+		decoder := xml.NewDecoder(rc)
+		var parts []string
+		var inTextElement bool
+
+		for {
+			tok, err := decoder.Token()
+			if err != nil {
+				break
+			}
+			switch t := tok.(type) {
+			case xml.StartElement:
+				// <a:t> is the text run element in OOXML (both PPTX and charts)
+				if t.Name.Local == "t" && (t.Name.Space == "http://schemas.openxmlformats.org/drawingml/2006/main" || t.Name.Space == "a" || t.Name.Space == "") {
+					inTextElement = true
+				}
+			case xml.EndElement:
+				if t.Name.Local == "t" {
+					inTextElement = false
+				}
+			case xml.CharData:
+				if inTextElement {
+					text := strings.TrimSpace(string(t))
+					if text != "" {
+						parts = append(parts, text)
+					}
+				}
+			}
+		}
+		return strings.Join(parts, " "), true
+	}
+	return "", false
 }
+
+// DOCX streaming text extraction
+// Uses xml.Decoder to read token-by-token, extracting only <w:t> text elements.
 
 func ExtractTextFromDOCX(filePath string) (string, error) {
 	r, err := zip.OpenReader(filePath)
@@ -50,106 +102,47 @@ func ExtractTextFromDOCX(filePath string) (string, error) {
 		}
 		defer rc.Close()
 
-		data, err := io.ReadAll(rc)
-		if err != nil {
-			return "", fmt.Errorf("cannot read document.xml: %w", err)
-		}
-
-		type docxRun struct {
-			Text string `xml:"t"`
-		}
-		type docxParagraph struct {
-			Runs []docxRun `xml:"r"`
-		}
-		type docxBody struct {
-			Paragraphs []docxParagraph `xml:"p"`
-		}
-		type docxDocument struct {
-			XMLName xml.Name `xml:"document"`
-			Body    docxBody `xml:"body"`
-		}
-
-		var doc docxDocument
-		if err := xml.Unmarshal(data, &doc); err != nil {
-			return "", fmt.Errorf("cannot parse document.xml: %w", err)
-		}
-
+		decoder := xml.NewDecoder(rc)
 		var paragraphs []string
-		for _, p := range doc.Body.Paragraphs {
-			var line []string
-			for _, run := range p.Runs {
-				if run.Text != "" {
-					line = append(line, run.Text)
+		var currentPara []string
+		var inTextElement bool
+
+		for {
+			tok, err := decoder.Token()
+			if err != nil {
+				break
+			}
+			switch t := tok.(type) {
+			case xml.StartElement:
+				if t.Name.Local == "t" && (t.Name.Space == "http://schemas.openxmlformats.org/wordprocessingml/2006/main" || t.Name.Space == "w" || t.Name.Space == "") {
+					inTextElement = true
+				}
+			case xml.EndElement:
+				if t.Name.Local == "t" {
+					inTextElement = false
+				}
+				// End of paragraph <w:p>
+				if t.Name.Local == "p" {
+					if len(currentPara) > 0 {
+						paragraphs = append(paragraphs, strings.Join(currentPara, ""))
+						currentPara = nil
+					}
+				}
+			case xml.CharData:
+				if inTextElement {
+					text := string(t)
+					if text != "" {
+						currentPara = append(currentPara, text)
+					}
 				}
 			}
-			if len(line) > 0 {
-				paragraphs = append(paragraphs, strings.Join(line, ""))
-			}
+		}
+		if len(currentPara) > 0 {
+			paragraphs = append(paragraphs, strings.Join(currentPara, ""))
 		}
 		return strings.Join(paragraphs, "\n"), nil
 	}
 	return "", fmt.Errorf("word/document.xml not found in docx")
-}
-
-func ExtractTextFromPPTX(filePath string) ([]string, error) {
-	r, err := zip.OpenReader(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("cannot open pptx: %w", err)
-	}
-	defer r.Close()
-
-	var slideTexts []string
-
-	for i := 1; i <= 100; i++ {
-		slideName := fmt.Sprintf("ppt/slides/slide%d.xml", i)
-		text := extractSlideText(r, slideName)
-		if text == "" {
-			break
-		}
-		slideTexts = append(slideTexts, text)
-	}
-
-	return slideTexts, nil
-}
-
-func extractSlideText(r *zip.ReadCloser, slideName string) string {
-	for _, f := range r.File {
-		if f.Name != slideName {
-			continue
-		}
-		rc, err := f.Open()
-		if err != nil {
-			return ""
-		}
-		defer rc.Close()
-
-		data, err := io.ReadAll(rc)
-		if err != nil {
-			return ""
-		}
-
-		var slide pptxSlideBody
-		if err := xml.Unmarshal(data, &slide); err != nil {
-			return ""
-		}
-
-		var parts []string
-		for _, shape := range slide.CSld.SpTree.Shapes {
-			for _, para := range shape.TxBody.Paragraphs {
-				var line []string
-				for _, run := range para.Runs {
-					if run.Text != "" {
-						line = append(line, run.Text)
-					}
-				}
-				if len(line) > 0 {
-					parts = append(parts, strings.Join(line, ""))
-				}
-			}
-		}
-		return strings.Join(parts, "\n")
-	}
-	return ""
 }
 
 // Chunking
@@ -163,16 +156,14 @@ func ChunkText(text string, maxChars int, overlap int) []string {
 	start := 0
 	for start < len(text) {
 		end := start + maxChars
-		if end > len(text) {
-			end = len(text)
+		if end >= len(text) {
+			chunks = append(chunks, strings.TrimSpace(text[start:]))
+			break
 		}
-		// Try to break at a newline or space
-		if end < len(text) {
-			for i := end; i > start+maxChars/2; i-- {
-				if text[i] == '\n' || text[i] == ' ' {
-					end = i
-					break
-				}
+		for i := end; i > start+maxChars/2; i-- {
+			if text[i] == '\n' || text[i] == ' ' {
+				end = i
+				break
 			}
 		}
 		chunks = append(chunks, strings.TrimSpace(text[start:end]))
@@ -214,10 +205,8 @@ func IndexFile(azure *AzureClient, companyID int, filePath string) error {
 		return nil
 	}
 
-	// Split into chunks (~2000 chars, ~500 tokens)
 	chunks := ChunkText(allText, 2000, 200)
 
-	// Delete existing chunks for this file
 	chunkService := ChunkService{}
 	if err := chunkService.DeleteByFile(companyID, filePath); err != nil {
 		zap.S().Warnw("Error deleting old chunks", "error", err)

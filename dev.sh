@@ -43,7 +43,7 @@ show_banner() {
     echo "  Redis:      localhost:6381"
     echo ""
     echo "  Login su http://localhost:5174"
-    echo "    Email:    admin@example.com"
+    echo "    Email:    admin@it.ey.com"
     echo "    Password: Admin123!"
     echo ""
     echo "========================================"

@@ -43,7 +43,7 @@ func main() {
 
 	zap.S().Info("Initialising gin router...")
 	r := gin.New()
-	r.MaxMultipartMemory = 20 * 1024 * 1024 // 20MB
+	r.MaxMultipartMemory = 8 * 1024 * 1024 // 8MB (excess goes to temp files)
 
 	// Middleware chain
 	r.Use(gin.Recovery())
@@ -77,3 +77,4 @@ func main() {
 	zap.S().Info("Starting server...")
 	r.Run() // listen and serve on 0.0.0.0:8080
 }
+

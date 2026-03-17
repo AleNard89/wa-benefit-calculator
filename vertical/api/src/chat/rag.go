@@ -15,25 +15,31 @@ import (
 const systemPrompt = `Sei un assistente AI per il Benefit Calculator, una piattaforma per calcolare i benefici dell'automazione RPA.
 Rispondi sempre in italiano. Sii preciso e conciso.
 
-Hai accesso a DUE fonti di dati DISTINTE:
+HAI ACCESSO A TRE FONTI DI DATI:
 
-1. **Proposte di automazione** (tabella processes): sono le schede di valutazione business dei processi, con ROI, risparmi, costi, stato di avanzamento. Sono le proposte inserite manualmente dagli utenti.
+1. **Processi** (schede di valutazione business): contengono anagrafica (nome, codice, area, proponente, responsabile, dipartimento), parametri operativi (periodicita, tecnologia, sistemi coinvolti, costi, tempi, tassi errore), risultati calcolati (ROI, risparmi, ore risparmiate, impact score), bot collegati (linked_bots) e documento caricato.
 
-2. **Esecuzioni bot Orchestrator** (tabelle orchestrator_job_executions, orchestrator_queue_items, orchestrator_schedules): sono i dati REALI delle esecuzioni dei robot UiPath. Contengono job eseguiti, stati (Successful/Faulted/Running), code di lavoro, errori, tempi di esecuzione, e le schedulazioni (trigger) configurate con cron expression e prossima esecuzione. Questi dati vengono sincronizzati dall'Orchestrator UiPath.
+2. **Orchestrator UiPath** (dati reali di esecuzione): esecuzioni bot (job con stato Successful/Faulted/Running), code di lavoro (queue items), schedulazioni (trigger con cron expression e prossima esecuzione). Ogni processo puo avere piu bot collegati (es. FL003_DSP, FL003_PRF sono bot dello stesso processo FL003).
 
-IMPORTANTE: Ogni proposta (processo) può avere un campo linked_bots con i nomi dei bot Orchestrator collegati. Un singolo processo/assessment può generare MOLTI bot con codici diversi (es. un processo può avere bot come ProcA_DSP, ProcA_PRF, ProcB_DSP, ecc.). Quando un bot appare nel campo linked_bots di un processo, NON trattarlo come un processo separato: fa parte di quel processo. Se l'utente chiede "di che parla FL002", cerca PRIMA se FL002 appare come linked_bot di qualche processo e rispondi che fa parte di quel processo. Usa la tabella orchestrator_process_queue_map per sapere quale bot è collegato a quale coda. Quando l'utente chiede di un "processo che ha girato" o "ultimo bot eseguito" o "errori", cerca SEMPRE nei dati Orchestrator (esecuzioni/code), NON nelle proposte. Quando chiede di ROI, costi, risparmi, valutazione, cerca nelle proposte. Quando l'utente chiede di schedulazioni, trigger, cron, "quando gira", "prossima esecuzione", cerca nei dati schedule dell'Orchestrator.
+3. **Documenti** (PPTX, DOCX, PDF) caricati per ogni processo: contengono la descrizione operativa dettagliata del processo (passi, sistemi, eccezioni, flusso).
 
-3. **Documenti** (file PDF, PowerPoint e Word) caricati dall'azienda per ogni processo.
+REGOLE FONDAMENTALI:
 
-Quando citi dati, indica i numeri esatti. Quando citi documenti, menziona il nome del file.
-Se non hai informazioni sufficienti per rispondere, dillo chiaramente.
+A) PARTI SEMPRE DAI PROCESSI. Ogni risposta deve essere organizzata per processo. I bot collegati (linked_bots) NON sono processi separati, sono componenti del processo padre. Se l'utente chiede una tabella, le righe devono essere i PROCESSI, non i singoli bot o schedulazioni.
 
-FORMATTAZIONE: Puoi usare Markdown nella risposta. Quando l'utente chiede dati in formato tabellare, lista, o tabella, usa SEMPRE tabelle Markdown con intestazioni e separatori (es: | Col1 | Col2 |\n|------|------|\n| val | val |). Il frontend supporta il rendering Markdown completo incluse tabelle, grassetto, corsivo, elenchi.
+B) CODICE PROCESSO: il codice del processo si ricava dal nome dei bot collegati (es. bot "FL003_ControlloGiacenzeFiorano_DSP" -> codice processo "FL003"). Quando mostri tabelle, includi sempre il codice processo.
 
-PROCESSI E SCHEDULAZIONI: Quando l'utente chiede la lista dei processi con schedulazione, per OGNI processo nel contesto controlla:
-1. Il campo "Periodicita prevista" (schedulazione configurata dall'utente)
-2. Il campo "Schedulazioni Orchestrator" (schedulazioni reali dall'Orchestrator UiPath con cron/frequenza)
-Includi TUTTI i processi, nessuno escluso. I bot collegati (linked_bots) NON sono processi separati, sono componenti del processo padre.`
+C) SCHEDULAZIONI: ogni processo puo avere piu bot, ognuno con la sua schedulazione. Quando l'utente chiede "schedulazione" o "orario di partenza", mostra SOLO l'orario/frequenza della schedulazione PRINCIPALE (tipicamente il primo trigger DSP o il trigger con frequenza piu bassa). NON elencare tutti i trigger separatamente a meno che non venga chiesto esplicitamente.
+
+D) DESCRIZIONI: quando l'utente chiede una "descrizione" o "descrizione sintetica" di un processo, usa il contenuto del documento caricato (sezione "Documenti rilevanti" nel contesto) per dare una descrizione operativa in 1-2 frasi. NON ripetere solo il campo "Descrizione" dell'anagrafica. Se il documento non e disponibile, usa la descrizione dall'anagrafica.
+
+E) DOCUMENTI: ogni processo puo avere un documento caricato. Quando l'utente chiede informazioni sui documenti o file, descrivi TUTTI i documenti disponibili, non solo uno.
+
+F) FORMATTAZIONE: usa Markdown. Per tabelle usa il formato: | Col1 | Col2 |\n|------|------|\n| val | val |. Quando l'utente chiede una tabella, scegli le colonne piu pertinenti alla domanda. Tieni le tabelle compatte e leggibili.
+
+G) RISPOSTE DIRETTE: rispondi subito con i dati richiesti. Non chiedere chiarimenti se puoi dedurre cosa serve dal contesto. Se l'utente chiede "tabella delle schedulazioni e descrizione", dai subito una tabella con processo, schedulazione e descrizione sintetica.
+
+H) BOT E PROCESSI: i codici come FL001, FL002, FL003, FL003b, FL006, FL008 sono codici processo. I nomi come "FL001-IWP_DSP", "FL003_ControlloGiacenzeFiorano_DSP" sono nomi bot. Ogni bot appartiene a un processo. Raggruppa sempre per processo.`
 
 const dbSchemaPrompt = `Schema del database disponibile:
 - processes: id, process_name, status ('To Valuate','Analysis','Ongoing','Production'), created_at, data (JSONB con: area, proposer, responsible_manager, department, process_type, periodicity, technology, systems_involved, implementation_cost, training_cost, maintenance_cost, hourly_cost, time_per_activity, activities_per_day, working_days_per_year, current_error_rate, post_error_rate, error_cost, productivity_factor, time_reduction_factor, data_quality_score, audit_score, customer_experience_score, error_reduction_score, standardization_score, scalability_score, linked_bots), results (JSONB con: operational_savings, error_reduction_savings, productivity_benefit, annual_savings, roi, break_even_months, hours_saved_monthly, hours_saved_annually, impact_score). NOTA: linked_bots e un array di nomi bot Orchestrator collegati a questo processo.
@@ -48,14 +54,14 @@ const dbSchemaPrompt = `Schema del database disponibile:
 func BuildRAGContext(azure *AzureClient, companyID int, question string) string {
 	var contextParts []string
 
-	// 1. Search document chunks
+	// 1. Search document chunks (most relevant to question)
 	if azure.embeddingDeployment != "" {
 		embedding, err := azure.CreateEmbedding(question)
 		if err != nil {
 			zap.S().Warnw("Failed to create embedding for RAG", "error", err)
 		} else {
 			chunkService := ChunkService{}
-			chunks, err := chunkService.SearchSimilar(companyID, embedding, 5)
+			chunks, err := chunkService.SearchSimilar(companyID, embedding, 10)
 			if err != nil {
 				zap.S().Warnw("Failed to search chunks", "error", err)
 			} else if len(chunks) > 0 {
@@ -63,8 +69,14 @@ func BuildRAGContext(azure *AzureClient, companyID int, question string) string 
 				for _, chunk := range chunks {
 					docParts = append(docParts, fmt.Sprintf("[Documento: %s]\n%s", chunk.FileName, chunk.Content))
 				}
-				contextParts = append(contextParts, "## Documenti rilevanti\n"+strings.Join(docParts, "\n\n"))
+				contextParts = append(contextParts, "## Contenuto documenti rilevanti\n"+strings.Join(docParts, "\n\n"))
 			}
+		}
+
+		// Also get first chunk of ALL documents (for overview/descriptions)
+		allFirstChunks := queryAllDocumentFirstChunks(companyID)
+		if allFirstChunks != "" {
+			contextParts = append(contextParts, "## Riepilogo di tutti i documenti caricati\n"+allFirstChunks)
 		}
 	}
 
@@ -86,80 +98,167 @@ func BuildRAGContext(azure *AzureClient, companyID int, question string) string 
 	return strings.Join(contextParts, "\n\n---\n\n")
 }
 
-func queryProcessData(companyID int) string {
-	db := db.DB()
+func queryAllDocumentFirstChunks(companyID int) string {
+	database := db.DB()
+	ctx := context.Background()
 
-	type ProcessSummary struct {
-		ProcessName string  `db:"process_name"`
-		Status      string  `db:"status"`
-		Area        string  `db:"area"`
-		Technology  string  `db:"technology"`
-		Description string  `db:"description"`
-		Periodicity string  `db:"periodicity"`
-		LinkedBots  string  `db:"linked_bots"`
-		BotNotes    string  `db:"bot_notes"`
-		ROI         float64 `db:"roi"`
-		Savings     float64 `db:"savings"`
+	rows, err := database.C.Query(ctx, `SELECT DISTINCT ON (file_name) file_name, content
+		FROM chat_document_chunks 
+		WHERE company_id = $1 AND chunk_index = 0
+		ORDER BY file_name, chunk_index`, companyID)
+	if err != nil {
+		return ""
+	}
+	defer rows.Close()
+
+	var parts []string
+	for rows.Next() {
+		var fileName, content string
+		if err := rows.Scan(&fileName, &content); err != nil {
+			continue
+		}
+		summary := content
+		if len(summary) > 500 {
+			summary = summary[:500] + "..."
+		}
+		parts = append(parts, fmt.Sprintf("- **%s**: %s", fileName, summary))
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	return fmt.Sprintf("Documenti indicizzati (%d):\n%s", len(parts), strings.Join(parts, "\n"))
+}
+
+func queryProcessData(companyID int) string {
+	database := db.DB()
+
+	type ProcessRow struct {
+		ProcessName  string  `db:"process_name"`
+		Status       string  `db:"status"`
+		Data         string  `db:"data"`
+		Results      string  `db:"results"`
+		DocumentName *string `db:"document_name"`
 	}
 
 	sql := `SELECT 
 		process_name,
 		status,
-		COALESCE(data->>'area', '') as area,
-		COALESCE(data->>'technology', '') as technology,
-		COALESCE(data->>'processDescription', '') as description,
-		COALESCE(data->>'periodicity', '') as periodicity,
-		COALESCE(data->>'linkedBots', '') as linked_bots,
-		COALESCE(data->>'botNotes', '') as bot_notes,
-		COALESCE((results->>'roi')::numeric, 0) as roi,
-		COALESCE((results->>'annual_savings')::numeric, 0) as savings
+		COALESCE(data::text, '{}') as data,
+		COALESCE(results::text, '{}') as results,
+		document_name
 	FROM processes 
 	WHERE company_id = $1 AND deleted_at IS NULL
 	ORDER BY created_at DESC 
 	LIMIT 50`
 
-	rows, err := db.C.Query(context.Background(), sql, companyID)
+	rows, err := database.C.Query(context.Background(), sql, companyID)
 	if err != nil {
 		zap.S().Warnw("Failed to query processes for RAG", "error", err)
 		return ""
 	}
 	defer rows.Close()
 
-	// Collect schedules to cross-reference with processes
 	schedMap := queryScheduleMap(companyID)
 
 	var lines []string
 	for rows.Next() {
-		var p ProcessSummary
-		if err := rows.Scan(&p.ProcessName, &p.Status, &p.Area, &p.Technology, &p.Description, &p.Periodicity, &p.LinkedBots, &p.BotNotes, &p.ROI, &p.Savings); err != nil {
+		var p ProcessRow
+		if err := rows.Scan(&p.ProcessName, &p.Status, &p.Data, &p.Results, &p.DocumentName); err != nil {
 			continue
 		}
-		line := fmt.Sprintf("- %s | Area: %s | Stato: %s | Tecnologia: %s | ROI: %.1f%% | Risparmio: €%.0f/anno",
-			p.ProcessName, p.Area, p.Status, p.Technology, p.ROI, p.Savings)
-		if p.Description != "" {
-			line += fmt.Sprintf("\n  Descrizione: %s", p.Description)
+
+		var data map[string]interface{}
+		var results map[string]interface{}
+		json.Unmarshal([]byte(p.Data), &data)
+		json.Unmarshal([]byte(p.Results), &results)
+
+		line := fmt.Sprintf("### %s\n  Stato: %s", p.ProcessName, p.Status)
+
+		// Anagrafica
+		addField := func(label, key string) {
+			if v, ok := data[key]; ok && v != nil && fmt.Sprintf("%v", v) != "" {
+				line += fmt.Sprintf("\n  %s: %v", label, v)
+			}
 		}
-		if p.Periodicity != "" {
-			line += fmt.Sprintf("\n  Periodicita prevista: %s", p.Periodicity)
+		addField("Area", "area")
+		addField("Proponente", "proposer")
+		addField("Responsabile", "responsibleManager")
+		addField("Dipartimento", "department")
+		addField("Tipo processo", "processType")
+		addField("Periodicita", "periodicity")
+		addField("Sistemi coinvolti", "systemsInvolved")
+		addField("Tecnologia", "technology")
+		addField("Altra tecnologia", "technologyOther")
+		addField("Descrizione", "processDescription")
+
+		// Costi e tempi
+		addNumField := func(label, key, unit string) {
+			if v, ok := data[key]; ok && v != nil {
+				if f, ok := v.(float64); ok && f > 0 {
+					line += fmt.Sprintf("\n  %s: %.0f%s", label, f, unit)
+				}
+			}
 		}
-		if p.LinkedBots != "" && p.LinkedBots != "null" && p.LinkedBots != "[]" {
-			line += fmt.Sprintf("\n  Bot collegati: %s", p.LinkedBots)
-			// Cross-reference: find schedules for each linked bot
-			botSchedules := matchBotSchedules(p.LinkedBots, schedMap)
+		addNumField("Costo implementazione", "implementationCost", "€")
+		addNumField("Costo formazione", "trainingCost", "€")
+		addNumField("Costo manutenzione annuo", "maintenanceCost", "€/anno")
+		addNumField("Costo orario", "hourlyCost", "€/h")
+		addNumField("Tempo per attivita", "timePerActivity", " min")
+		addNumField("Attivita al giorno", "activitiesPerDay", "")
+		addNumField("Giorni lavorativi/anno", "workingDaysPerYear", "")
+		addNumField("Tasso errore attuale", "currentErrorRate", "%")
+		addNumField("Tasso errore post-RPA", "postErrorRate", "%")
+		addNumField("Costo per errore", "errorCost", "€")
+		addNumField("Riduzione tempo", "timeReductionFactor", "%")
+
+		// Risultati
+		addResField := func(label, key, unit string) {
+			if v, ok := results[key]; ok && v != nil {
+				if f, ok := v.(float64); ok && f != 0 {
+					line += fmt.Sprintf("\n  %s: %.1f%s", label, f, unit)
+				}
+			}
+		}
+		addResField("ROI", "roi", "%")
+		addResField("Risparmio annuale", "annualSavings", "€")
+		addResField("Risparmio operativo", "operationalSavings", "€")
+		addResField("Risparmio riduzione errori", "errorReductionSavings", "€")
+		addResField("Beneficio produttivita", "productivityBenefit", "€")
+		addResField("Ore risparmiate/mese", "hoursSavedMonthly", " h")
+		addResField("Ore risparmiate/anno", "hoursSavedAnnually", " h")
+		addResField("Impact Score", "impactScore", "")
+		if v, ok := results["breakEvenMonths"]; ok && v != nil {
+			if f, ok := v.(float64); ok && f > 0 {
+				line += fmt.Sprintf("\n  Break-even: %.0f mesi", f)
+			}
+		}
+
+		// Documento
+		if p.DocumentName != nil && *p.DocumentName != "" {
+			line += fmt.Sprintf("\n  Documento caricato: %s", *p.DocumentName)
+		}
+
+		// Bot collegati e schedulazioni
+		linkedBots := fmt.Sprintf("%v", data["linkedBots"])
+		if linkedBots != "" && linkedBots != "<nil>" && linkedBots != "null" && linkedBots != "[]" {
+			line += fmt.Sprintf("\n  Bot collegati: %s", linkedBots)
+			linkedBotsJSON, _ := json.Marshal(data["linkedBots"])
+			botSchedules := matchBotSchedules(string(linkedBotsJSON), schedMap)
 			if botSchedules != "" {
 				line += fmt.Sprintf("\n  Schedulazioni Orchestrator: %s", botSchedules)
 			}
 		}
-		if p.BotNotes != "" {
-			line += fmt.Sprintf("\n  Ruolo bot: %s", p.BotNotes)
+		if v, ok := data["botNotes"]; ok && v != nil && fmt.Sprintf("%v", v) != "" {
+			line += fmt.Sprintf("\n  Ruolo bot: %v", v)
 		}
+
 		lines = append(lines, line)
 	}
 
 	if len(lines) == 0 {
 		return "Nessun processo trovato per questa azienda."
 	}
-	return fmt.Sprintf("Processi aziendali (%d):\n%s", len(lines), strings.Join(lines, "\n"))
+	return fmt.Sprintf("Processi aziendali (%d):\n%s", len(lines), strings.Join(lines, "\n\n"))
 }
 
 type scheduleInfo struct {

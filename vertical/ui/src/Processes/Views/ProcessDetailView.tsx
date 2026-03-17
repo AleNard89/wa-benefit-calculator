@@ -43,6 +43,10 @@ export default function ProcessDetailView() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editTab, setEditTab] = useState<EditTabKey>('general')
+  const [docBusy, setDocBusy] = useState(false)
+  const [docBusyMsg, setDocBusyMsg] = useState('')
+  const [docDone, setDocDone] = useState(false)
+  const [docError, setDocError] = useState(false)
   const cancelRef = useRef<HTMLButtonElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -168,24 +172,51 @@ export default function ProcessDetailView() {
     }
   }
 
+  const closeDocModal = (success: boolean) => {
+    setDocDone(true)
+    setDocError(!success)
+    setDocBusyMsg(success ? 'Operazione completata!' : 'Si e\' verificato un errore.')
+    setTimeout(() => {
+      setDocBusy(false)
+      setDocDone(false)
+      setDocError(false)
+    }, 1500)
+  }
+
+  const withMinDelay = async (promise: Promise<unknown>, minMs: number) => {
+    const start = Date.now()
+    const result = await promise
+    const elapsed = Date.now() - start
+    if (elapsed < minMs) await new Promise((r) => setTimeout(r, minMs - elapsed))
+    return result
+  }
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    setDocDone(false)
+    setDocError(false)
+    setDocBusyMsg('Caricamento documento in corso...')
+    setDocBusy(true)
     try {
-      await uploadDocument({ id: process.id, file }).unwrap()
-      toaster.success({ title: 'Documento caricato e indicizzato' })
+      await withMinDelay(uploadDocument({ id: process.id, file }).unwrap(), 2000)
+      closeDocModal(true)
     } catch {
-      toaster.error({ title: 'Errore caricamento documento' })
+      closeDocModal(false)
     }
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   const handleDeleteDocument = async () => {
+    setDocDone(false)
+    setDocError(false)
+    setDocBusyMsg('Rimozione documento in corso...')
+    setDocBusy(true)
     try {
-      await deleteDocument(process.id).unwrap()
-      toaster.success({ title: 'Documento rimosso' })
+      await withMinDelay(deleteDocument(process.id).unwrap(), 1500)
+      closeDocModal(true)
     } catch {
-      toaster.error({ title: 'Errore rimozione documento' })
+      closeDocModal(false)
     }
   }
 
@@ -270,6 +301,25 @@ export default function ProcessDetailView() {
                   Elimina
                 </Button>
               </Dialog.Footer>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
+
+      <Dialog.Root open={docBusy} closeOnInteractOutside={false} closeOnEscape={false}>
+        <Portal>
+          <Dialog.Backdrop />
+          <Dialog.Positioner>
+            <Dialog.Content>
+              <Dialog.Body py={10}>
+                <Flex direction="column" align="center" gap={4}>
+                  {!docDone && <Spinner size="xl" color="brand.300" />}
+                  {docDone && !docError && <Text fontSize="3xl">&#10003;</Text>}
+                  {docDone && docError && <Text fontSize="3xl">&#10007;</Text>}
+                  <Text fontSize="md" fontWeight="500">{docBusyMsg}</Text>
+                  {!docDone && <Text fontSize="sm" color="fg.muted">Attendere il completamento prima di continuare.</Text>}
+                </Flex>
+              </Dialog.Body>
             </Dialog.Content>
           </Dialog.Positioner>
         </Portal>
