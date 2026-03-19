@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"benefit-calculator-api/db"
+	"orbita-api/db"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/georgysavva/scany/v2/pgxscan"

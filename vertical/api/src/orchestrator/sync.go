@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"benefit-calculator-api/core"
-	"benefit-calculator-api/db"
+	"orbita-api/core"
+	"orbita-api/db"
 
 	"go.uber.org/zap"
 )

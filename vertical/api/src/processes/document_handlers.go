@@ -9,11 +9,11 @@ import (
 	"strings"
 	"time"
 
-	"benefit-calculator-api/chat"
-	"benefit-calculator-api/core/httpx"
-	"benefit-calculator-api/orgs"
+	"orbita-api/chat"
+	"orbita-api/core/httpx"
+	"orbita-api/orgs"
 
-	d "benefit-calculator-api/core/decorators"
+	d "orbita-api/core/decorators"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

@@ -1,8 +1,8 @@
 package orgs
 
 import (
-	"benefit-calculator-api/core/utils"
-	"benefit-calculator-api/db"
+	"orbita-api/core/utils"
+	"orbita-api/db"
 	"context"
 	"time"
 

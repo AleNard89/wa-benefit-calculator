@@ -71,7 +71,7 @@ function CompanySwitcher() {
     return (
       <Box px={5} pt={5} pb={2}>
         <Text fontSize="11px" fontWeight="600" color="#86868b" letterSpacing="0.5px" textTransform="uppercase" mb={1}>
-          Benefit Calculator
+          Orbita
         </Text>
         <Text fontSize="15px" fontWeight="700" color="#1d1d1f" letterSpacing="-0.2px">
           {currentCompany?.name ?? 'Nessuna azienda'}
@@ -83,7 +83,7 @@ function CompanySwitcher() {
   return (
     <Box px={3} pt={4} pb={1} position="relative">
       <Text px={2} fontSize="11px" fontWeight="600" color="#86868b" letterSpacing="0.5px" textTransform="uppercase" mb={1}>
-        Benefit Calculator
+        Orbita
       </Text>
       <Flex
         align="center"

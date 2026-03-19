@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Web application for calculating financial benefits of RPA (Robotic Process Automation). Multi-tenant SaaS with RBAC, RAG chat (Azure OpenAI), UiPath Orchestrator integration, and Docker-based infrastructure. The UI and all user-facing text are in **Italian**.
+**Orbita** — Web application for calculating financial benefits of RPA (Robotic Process Automation). Multi-tenant SaaS with RBAC, RAG chat (Azure OpenAI), UiPath Orchestrator integration, and Docker-based infrastructure. The UI and all user-facing text are in **Italian**.
 
 ## Commands
 

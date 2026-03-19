@@ -1,7 +1,7 @@
 package orgs
 
 import (
-	"benefit-calculator-api/core/backends"
+	"orbita-api/core/backends"
 	"fmt"
 	"regexp"
 	"strings"

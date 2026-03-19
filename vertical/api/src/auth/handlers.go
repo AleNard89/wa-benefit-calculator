@@ -2,14 +2,14 @@ package auth
 
 import (
 	"context"
-	"benefit-calculator-api/core"
-	"benefit-calculator-api/core/httpx"
+	"orbita-api/core"
+	"orbita-api/core/httpx"
 	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
-	d "benefit-calculator-api/core/decorators"
+	d "orbita-api/core/decorators"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"

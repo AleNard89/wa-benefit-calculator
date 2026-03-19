@@ -1,7 +1,7 @@
 package orgs
 
 import (
-	"benefit-calculator-api/core/shared"
+	"orbita-api/core/shared"
 	"strconv"
 
 	"github.com/gin-gonic/gin"

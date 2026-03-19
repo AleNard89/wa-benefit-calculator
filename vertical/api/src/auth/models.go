@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"benefit-calculator-api/orgs"
+	"orbita-api/orgs"
 
 	"go.uber.org/zap"
 )

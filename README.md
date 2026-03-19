@@ -1,4 +1,4 @@
-# RPA Benefit Calculator
+# Orbita
 
 A multi-tenant web application for evaluating and tracking the business benefits of Robotic Process Automation (RPA), with UiPath Orchestrator integration and an AI-powered chatbot.
 

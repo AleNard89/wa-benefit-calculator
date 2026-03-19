@@ -3,8 +3,8 @@ package auth
 import (
 	"context"
 	"errors"
-	"benefit-calculator-api/core/utils"
-	"benefit-calculator-api/db"
+	"orbita-api/core/utils"
+	"orbita-api/db"
 	"fmt"
 	"os"
 	"strings"
@@ -75,7 +75,7 @@ type jwtService struct {
 func JWTAuthService() JWTService {
 	return &jwtService{
 		secretKey: mustSecretKey(),
-		issuer:    "BenefitCalculator",
+		issuer:    "Orbita",
 	}
 }
 

@@ -2,8 +2,8 @@ package orgs
 
 import (
 	"context"
-	"benefit-calculator-api/core/utils"
-	"benefit-calculator-api/db"
+	"orbita-api/core/utils"
+	"orbita-api/db"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/georgysavva/scany/v2/pgxscan"

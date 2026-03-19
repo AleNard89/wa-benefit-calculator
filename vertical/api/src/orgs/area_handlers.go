@@ -1,8 +1,8 @@
 package orgs
 
 import (
-	"benefit-calculator-api/core/httpx"
-	d "benefit-calculator-api/core/decorators"
+	"orbita-api/core/httpx"
+	d "orbita-api/core/decorators"
 	"net/http"
 	"strconv"
 

@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"benefit-calculator-api/db"
-	"benefit-calculator-api/orgs"
+	"orbita-api/db"
+	"orbita-api/orgs"
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"

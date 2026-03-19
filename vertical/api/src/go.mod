@@ -1,4 +1,4 @@
-module benefit-calculator-api
+module orbita-api
 
 go 1.24.1
 

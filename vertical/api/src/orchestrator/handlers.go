@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"time"
 
-	"benefit-calculator-api/core"
-	"benefit-calculator-api/core/httpx"
+	"orbita-api/core"
+	"orbita-api/core/httpx"
 
-	d "benefit-calculator-api/core/decorators"
+	d "orbita-api/core/decorators"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

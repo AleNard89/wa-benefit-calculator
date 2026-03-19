@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"benefit-calculator-api/db"
+	"orbita-api/db"
 
 	"go.uber.org/zap"
 )
 
-const systemPrompt = `Sei un assistente AI per il Benefit Calculator, una piattaforma per calcolare i benefici dell'automazione RPA.
+const systemPrompt = `Sei un assistente AI per Orbita, una piattaforma per calcolare i benefici dell'automazione RPA.
 Rispondi sempre in italiano. Sii preciso e conciso.
 
 HAI ACCESSO A TRE FONTI DI DATI:

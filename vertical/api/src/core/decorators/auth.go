@@ -1,9 +1,9 @@
 package decorators
 
 import (
-	"benefit-calculator-api/core/httpx"
-	"benefit-calculator-api/core/shared"
-	"benefit-calculator-api/core/utils"
+	"orbita-api/core/httpx"
+	"orbita-api/core/shared"
+	"orbita-api/core/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

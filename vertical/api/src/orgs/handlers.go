@@ -1,12 +1,12 @@
 package orgs
 
 import (
-	"benefit-calculator-api/core/httpx"
-	"benefit-calculator-api/core/shared"
+	"orbita-api/core/httpx"
+	"orbita-api/core/shared"
 	"net/http"
 	"strconv"
 
-	d "benefit-calculator-api/core/decorators"
+	d "orbita-api/core/decorators"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
