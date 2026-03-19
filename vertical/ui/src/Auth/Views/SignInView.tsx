@@ -45,10 +45,12 @@ export default function SignInView() {
         boxShadow="0 2px 16px rgba(0,0,0,0.08)"
       >
         <VStack gap={5}>
-          <Text fontSize="24px" fontWeight="700" color="#1d1d1f">Benefit Calculator</Text>
+          <Text fontSize="24px" fontWeight="700" color="#1d1d1f">Orbita</Text>
           <Text fontSize="13px" color="#86868b">Accedi con le tue credenziali</Text>
 
           <Input
+            name="email"
+            autoComplete="username"
             placeholder="Email"
             type="email"
             value={email}
@@ -62,6 +64,8 @@ export default function SignInView() {
             _focus={{ bg: 'white', boxShadow: '0 0 0 3px rgba(0,122,255,0.3)' }}
           />
           <Input
+            name="password"
+            autoComplete="current-password"
             placeholder="Password"
             type="password"
             value={password}
