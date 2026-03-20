@@ -1,18 +1,18 @@
 {
-  "host": "YOUR_SERVER_IP_OR_DOMAIN",
+  "host": "20.234.199.154",
   "scheme": "http",
-  "baseUrl": "http://YOUR_SERVER_IP_OR_DOMAIN/api",
+  "baseUrl": "http://20.234.199.154/api",
   "environment": "production",
   "api": {
-    "allowedOrigins": ["http://YOUR_SERVER_IP_OR_DOMAIN"],
-    "refreshTokenCookieDomain": "YOUR_SERVER_IP_OR_DOMAIN"
+    "allowedOrigins": ["http://20.234.199.154", "http://20.234.199.154:8081", "http://localhost:8081", "http://localhost"],
+    "refreshTokenCookieDomain": "20.234.199.154"
   },
   "jwt": {
     "accessTokenValidityMinutes": 15,
     "refreshTokenValidityMinutes": 1440
   },
   "ui": {
-    "url": "http://YOUR_SERVER_IP_OR_DOMAIN",
-    "passwordResetUrl": "http://YOUR_SERVER_IP_OR_DOMAIN/reset-password/confirm"
+    "url": "http://20.234.199.154",
+    "passwordResetUrl": "http://20.234.199.154/reset-password/confirm"
   }
 }

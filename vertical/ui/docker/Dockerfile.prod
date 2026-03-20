@@ -29,7 +29,7 @@ ENV VITE_LOGGER_LEVEL=${VITE_LOGGER_LEVEL}
 ENV VITE_DEV=${VITE_DEV}
 ENV VITE_APP_STORAGE=${VITE_APP_STORAGE}
 
-RUN yarn build
+RUN yarn vite build
 
 # =============================================================
 # Stage 2: Run — nginx serve i file statici e fa da proxy API

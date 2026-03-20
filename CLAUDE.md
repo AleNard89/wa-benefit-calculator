@@ -62,7 +62,7 @@ No local Python, Node.js, or Go installation needed -- everything runs in Docker
 ### Infrastructure
 - **PostgreSQL 17** with pgvector extension — main database with RLS
 - **Redis 7** — session cache, brute-force protection
-- **Docker Compose** — dev (hot-reload: reflex for Go, Vite HMR) + prod (compiled binary, nginx, no exposed ports except 80)
+- **Docker Compose** — dev (hot-reload: reflex for Go, Vite HMR) + prod (compiled binary, nginx, exposed on port 8081)
 - **nginx** (production only) — reverse proxy: serves React SPA + proxies `/api/` to Go backend, handles SSE/WebSocket
 
 ### URLs (dev)
@@ -78,8 +78,8 @@ No local Python, Node.js, or Go installation needed -- everything runs in Docker
 
 | Service | URL |
 |---------|-----|
-| App (frontend + API) | http://YOUR_SERVER_IP |
-| API health | http://YOUR_SERVER_IP/api/health |
+| App (frontend + API) | http://YOUR_SERVER_IP:8081 |
+| API health | http://YOUR_SERVER_IP:8081/api/health |
 | PostgreSQL | internal only (no exposed port) |
 | Redis | internal only (no exposed port) |
 
@@ -88,7 +88,17 @@ No local Python, Node.js, or Go installation needed -- everything runs in Docker
 | File | What to change |
 |------|----------------|
 | `.env.prod` | Copied from `.env.prod.example` — fill all values |
-| `vertical/api/src/settings.prod.json` | Replace `YOUR_SERVER_IP_OR_DOMAIN` with real IP/domain |
+| `vertical/api/src/settings.prod.json` | Replace `YOUR_SERVER_IP_OR_DOMAIN` with real IP/domain + update `allowedOrigins` with correct port |
+
+### Windows VM — one-time firewall setup (run once after first deploy)
+
+Open PowerShell as Administrator and run:
+
+```powershell
+netsh advfirewall firewall add rule name=OrbHTTP8081 dir=in action=allow protocol=TCP localport=8081
+```
+
+> Azure NSG and Windows Defender Firewall are independent layers — both must allow the port.
 
 ## Git Workflow
 
