@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS auth_roles_permissions (
 
 -- Seed admin user (password: Admin123! - bcrypt hash cost 12)
 INSERT INTO auth_users (email, password, is_superuser, firstname, lastname, created_at, updated_at)
-VALUES ('admin@example.com', '$2a$12$wAP.XV6FOFul1UPdU6O/Tev.lLMCdgag/qcBnwkMQIMGB5K0B4po.', TRUE, 'Admin', 'Admin', NOW(), NOW())
+VALUES ('admin@it.ey.com', '$2a$12$wAP.XV6FOFul1UPdU6O/Tev.lLMCdgag/qcBnwkMQIMGB5K0B4po.', TRUE, 'Admin', 'Admin', NOW(), NOW())
 ON CONFLICT DO NOTHING;
 
 -- Seed default company
@@ -79,12 +79,12 @@ ON CONFLICT DO NOTHING;
 
 -- Assign admin user to default company
 INSERT INTO auth_users_companies (user_id, company_id)
-SELECT u.id, 1 FROM auth_users u WHERE u.email = 'admin@example.com'
+SELECT u.id, 1 FROM auth_users u WHERE u.email = 'admin@it.ey.com'
 ON CONFLICT DO NOTHING;
 
 -- Assign Admin role to admin user for default company
 INSERT INTO auth_users_roles (user_id, role_id, company_id)
-SELECT u.id, 1, 1 FROM auth_users u WHERE u.email = 'admin@example.com'
+SELECT u.id, 1, 1 FROM auth_users u WHERE u.email = 'admin@it.ey.com'
 ON CONFLICT DO NOTHING;
 
 COMMIT;

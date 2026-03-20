@@ -1,0 +1,42 @@
+# Normalizza tutti i file di testo a LF (Line Feed) nel repository.
+# Su Windows, Git converte LF -> CRLF al checkout ma salva sempre LF.
+# Questo evita i problemi di CRLF nei container Docker Linux.
+
+* text=auto eol=lf
+
+# Script e config Docker: SEMPRE LF
+*.sh        text eol=lf
+Dockerfile* text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.env*      text eol=lf
+
+# Codice
+*.go        text eol=lf
+*.ts        text eol=lf
+*.tsx       text eol=lf
+*.js        text eol=lf
+*.jsx       text eol=lf
+*.json      text eol=lf
+*.sql       text eol=lf
+*.conf      text eol=lf
+*.md        text eol=lf
+*.html      text eol=lf
+*.css       text eol=lf
+
+# File binari: non toccare
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.woff      binary
+*.woff2     binary
+*.ttf       binary
+*.eot       binary
+*.otf       binary
+*.zip       binary
+*.pdf       binary
+*.docx      binary
+*.pptx      binary
+*.xlsx      binary

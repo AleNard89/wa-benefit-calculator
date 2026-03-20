@@ -8,16 +8,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-```bash
-# Start the full stack (Docker required)
-./dev.sh up
+### Development (Mac/local)
 
-# Other useful commands
+```bash
+./dev.sh up              # Start the full stack (with hot-reload)
 ./dev.sh down            # Stop and remove containers
 ./dev.sh logs [service]  # View logs (api, ui, postgres, redis, migrations)
 ./dev.sh restart         # Restart everything
 ./dev.sh db              # Open psql session
 ./dev.sh ps              # Container status
+```
+
+### Production (Windows VM / server)
+
+```bash
+# First deploy — one-time setup:
+cp .env.prod.example .env.prod           # Fill in all values
+# Edit vertical/api/src/settings.prod.json — replace YOUR_SERVER_IP_OR_DOMAIN
+./prod.sh up                             # Build images + start stack
+
+# After a git pull with new code:
+./prod.sh update                         # Rebuild images + restart
+
+# Other commands
+./prod.sh down            # Stop and remove containers (data preserved in volumes)
+./prod.sh down --volumes  # Stop + DELETE all data (irreversible!)
+./prod.sh logs [service]  # View logs
+./prod.sh db              # Open psql session
+./prod.sh ps              # Container status
 ```
 
 No local Python, Node.js, or Go installation needed -- everything runs in Docker.
@@ -44,7 +62,8 @@ No local Python, Node.js, or Go installation needed -- everything runs in Docker
 ### Infrastructure
 - **PostgreSQL 17** with pgvector extension — main database with RLS
 - **Redis 7** — session cache, brute-force protection
-- **Docker Compose** — dev environment with hot-reload (reflex for Go, Vite HMR for React)
+- **Docker Compose** — dev (hot-reload: reflex for Go, Vite HMR) + prod (compiled binary, nginx, no exposed ports except 80)
+- **nginx** (production only) — reverse proxy: serves React SPA + proxies `/api/` to Go backend, handles SSE/WebSocket
 
 ### URLs (dev)
 
@@ -54,6 +73,22 @@ No local Python, Node.js, or Go installation needed -- everything runs in Docker
 | API | http://localhost:8082/api/health |
 | PostgreSQL | localhost:5435 |
 | Redis | localhost:6381 |
+
+### URLs (prod)
+
+| Service | URL |
+|---------|-----|
+| App (frontend + API) | http://YOUR_SERVER_IP |
+| API health | http://YOUR_SERVER_IP/api/health |
+| PostgreSQL | internal only (no exposed port) |
+| Redis | internal only (no exposed port) |
+
+### Production config files to edit before first deploy
+
+| File | What to change |
+|------|----------------|
+| `.env.prod` | Copied from `.env.prod.example` — fill all values |
+| `vertical/api/src/settings.prod.json` | Replace `YOUR_SERVER_IP_OR_DOMAIN` with real IP/domain |
 
 ## Git Workflow
 

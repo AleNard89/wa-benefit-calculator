@@ -1,0 +1,93 @@
+services:
+
+  # -------------------------------------------------------
+  # PostgreSQL — database principale con pgvector
+  # -------------------------------------------------------
+  postgres:
+    env_file:
+      - .env.prod
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: always
+
+  # -------------------------------------------------------
+  # Redis — cache sessioni e protezione brute-force
+  # -------------------------------------------------------
+  redis:
+    restart: always
+
+  # -------------------------------------------------------
+  # Migrations — esegue le migrazioni SQL e poi termina
+  # -------------------------------------------------------
+  migrations:
+    image: ${PROJECT_NAME}-migrations-prod
+    build:
+      context: ./vertical/migrations
+      dockerfile: ./docker/Dockerfile.prod
+    env_file:
+      - .env.prod
+    volumes:
+      - ./vertical/migrations/src:/go/migrations/
+    command:
+      - "migrate"
+      - "-database"
+      - "$POSTGRESQL_URL"
+      - "-path"
+      - "postgres"
+      - "up"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  # -------------------------------------------------------
+  # API — backend Go (binario compilato, nessun hot-reload)
+  # -------------------------------------------------------
+  api:
+    image: ${PROJECT_NAME}-api-prod
+    build:
+      context: ./vertical/api/
+      dockerfile: ./docker/Dockerfile.prod
+    env_file:
+      - .env.prod
+    volumes:
+      - media_data:/data/companies
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      migrations:
+        condition: service_completed_successfully
+    restart: always
+
+  # -------------------------------------------------------
+  # UI — nginx serve il frontend React e fa da reverse proxy
+  #      verso l'API (porta 80 è l'unica porta esposta)
+  # -------------------------------------------------------
+  ui:
+    image: ${PROJECT_NAME}-ui-prod
+    build:
+      context: ./vertical/ui/
+      dockerfile: ./docker/Dockerfile.prod
+      args:
+        - VITE_API_BASE_PATH=/api
+        - VITE_WS_BASE_PATH=/api/ws
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    restart: always
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  media_data:
+    driver: local

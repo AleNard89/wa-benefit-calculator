@@ -63,7 +63,7 @@ ON CONFLICT DO NOTHING;
 -- Assign admin user to all areas
 INSERT INTO auth_users_areas (user_id, area_id)
 SELECT u.id, a.id FROM auth_users u, orgs_areas a
-WHERE u.email = 'admin@example.com' AND a.company_id = 1
+WHERE u.email = 'admin@it.ey.com' AND a.company_id = 1
 ON CONFLICT DO NOTHING;
 
 COMMIT;

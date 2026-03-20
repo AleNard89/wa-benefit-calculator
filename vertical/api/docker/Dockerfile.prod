@@ -1,0 +1,37 @@
+# =============================================================
+# Stage 1: Build — compila il binario Go
+# =============================================================
+FROM golang:1.24-alpine AS builder
+
+RUN apk add --no-cache git ca-certificates
+
+ENV GIT_SSL_NO_VERIFY=1
+ENV GONOSUMCHECK=*
+ENV GONOSUMDB=*
+ENV GOINSECURE=*
+ENV GOPROXY=direct
+
+WORKDIR /build
+
+COPY src/ .
+
+RUN go mod download
+
+# Build statico: nessuna dipendenza da librerie C, funziona su alpine minimale
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /app main.go
+
+# =============================================================
+# Stage 2: Run — immagine minimale con solo il binario
+# =============================================================
+FROM alpine:3.21
+
+RUN apk add --no-cache ca-certificates tzdata
+
+WORKDIR /app
+
+COPY --from=builder /app /app/server
+COPY src/settings.prod.json /app/settings.prod.json
+
+EXPOSE 8080
+
+CMD ["/app/server"]

@@ -1,0 +1,18 @@
+{
+  "host": "YOUR_SERVER_IP_OR_DOMAIN",
+  "scheme": "http",
+  "baseUrl": "http://YOUR_SERVER_IP_OR_DOMAIN/api",
+  "environment": "production",
+  "api": {
+    "allowedOrigins": ["http://YOUR_SERVER_IP_OR_DOMAIN"],
+    "refreshTokenCookieDomain": "YOUR_SERVER_IP_OR_DOMAIN"
+  },
+  "jwt": {
+    "accessTokenValidityMinutes": 15,
+    "refreshTokenValidityMinutes": 1440
+  },
+  "ui": {
+    "url": "http://YOUR_SERVER_IP_OR_DOMAIN",
+    "passwordResetUrl": "http://YOUR_SERVER_IP_OR_DOMAIN/reset-password/confirm"
+  }
+}
