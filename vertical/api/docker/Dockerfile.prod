@@ -6,10 +6,10 @@ FROM golang:1.24-alpine AS builder
 RUN apk add --no-cache git ca-certificates
 
 ENV GIT_SSL_NO_VERIFY=1
-ENV GONOSUMCHECK=*
 ENV GONOSUMDB=*
 ENV GOINSECURE=*
 ENV GOPROXY=direct
+ENV GOFLAGS=-mod=mod
 
 WORKDIR /build
 
