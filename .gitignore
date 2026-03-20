@@ -27,6 +27,9 @@ BenefitCalculator_Presentation.html
 orbita-presentation/
 screenshot_presentazione/
 
+# Claude Code settings (local only)
+.claude/
+
 # Webapp
 vertical/ui/node_modules/
 vertical/ui/dist/
