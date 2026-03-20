@@ -58,6 +58,7 @@ const extendedApi = api.injectEndpoints({
 
 export const {
   useCompaniesQuery,
+  useLazyCompaniesQuery,
   useCompanyQuery,
   useCreateCompanyMutation,
   useUpdateCompanyMutation,
