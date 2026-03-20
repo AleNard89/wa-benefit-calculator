@@ -20,7 +20,7 @@ const baseQuery = fetchBaseQuery({
   prepareHeaders: (headers, { getState }) => {
     headers.set('Accept-Language', 'it')
     const { auth, orgs } = getState() as RootState
-    const companyId = orgs.companyId ?? auth.user?.companyRoles?.[0]?.company.id.toString()
+    const companyId = orgs.companyId || auth.user?.companyRoles?.[0]?.company.id.toString()
     if (companyId) headers.set('X-Company-Id', companyId)
     if (auth.token) {
       headers.set('Authorization', `Bearer ${auth.token}`)

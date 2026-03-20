@@ -1,5 +1,5 @@
 import { Box, Flex, Text, VStack } from '@chakra-ui/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { LuBot, LuBuilding2, LuCheck, LuChevronDown, LuFilePlus, LuLayoutDashboard, LuList, LuLogOut, LuMessageCircle } from 'react-icons/lu'
@@ -60,6 +60,12 @@ function CompanySwitcher() {
     : (user?.companyRoles?.map((cr) => cr.company) ?? [])
 
   const currentCompany = companies.find((c) => c.id.toString() === currentCompanyId) ?? companies[0]
+
+  useEffect(() => {
+    if (!currentCompanyId && companies.length > 0) {
+      dispatch(setCompanyId(companies[0].id))
+    }
+  }, [currentCompanyId, companies, dispatch])
 
   const handleSelect = (company: Company) => {
     dispatch(setCompanyId(company.id))
