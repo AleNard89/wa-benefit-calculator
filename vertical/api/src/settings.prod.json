@@ -4,8 +4,14 @@
   "baseUrl": "http://20.234.199.154/api",
   "environment": "production",
   "api": {
-    "allowedOrigins": ["http://20.234.199.154", "http://20.234.199.154:8081", "http://localhost:8081", "http://localhost"],
-    "refreshTokenCookieDomain": "20.234.199.154"
+    "allowedOrigins": [
+      "http://20.234.199.154",
+      "http://20.234.199.154:8081",
+      "http://orbita-systems.westeurope.cloudapp.azure.com:8081",
+      "http://localhost:8081",
+      "http://localhost"
+    ],
+    "refreshTokenCookieDomain": "orbita-systems.westeurope.cloudapp.azure.com"
   },
   "jwt": {
     "accessTokenValidityMinutes": 15,
